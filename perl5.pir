@@ -27,7 +27,7 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
     $P0 = get_root_global ['parrot'], 'P6metaclass'
     $P1 = $P0.'new_class'('Perl5::Compiler', 'parent'=>'PCT::HLLCompiler')
     $P1.'language'('perl5')
-    $P0 = split ' ', 'eval'
+    $P0 = split ' ', 'make_interp'
     setattribute $P1, '@stages', $P0
 .end
 
@@ -47,17 +47,32 @@ to the blizkost compiler.
 .end
 
 
-=item eval()
+=item make_interp()
 
 =cut
 
-.sub 'eval' :method
+.sub 'make_interp' :method
     .param string source
     .param pmc adverbs      :slurpy :named
 
     $P0 = new 'P5Interpreter'
     $P0 = source
     .return ($P0)
+.end
+
+
+=item eval
+
+=cut
+
+.sub 'eval' :method
+    .param pmc code
+    .param pmc args            :slurpy
+    .param pmc adverbs         :slurpy :named
+    
+    $P0 = self.'compile'(code, args :flat, adverbs :flat :named)
+    $P0()
+    .return ("")
 .end
 
 =back

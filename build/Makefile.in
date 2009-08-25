@@ -128,7 +128,6 @@ install: installable
 	-$(MKPATH) $(LIB_DIR)/languages/perl5
 	$(CP) perl5.pbc $(LIB_DIR)/languages/perl5/perl5.pbc
 	-$(MKPATH) $(MANDIR)/man1
-	$(POD2MAN) doc/running.pod > $(MANDIR)/man1/parrot-blizkost.1
 	-$(MKPATH) $(DOC_DIR)/languages/perl5
 	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
 
