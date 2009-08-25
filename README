@@ -8,20 +8,23 @@ then building out from there.
 
 First build and install:
 
-  perl Configure.pl --parrot-config=... # your path to installed Parrot
+  perl Configure.pl --parrot-config=... # path to installed parrot_config
   make
   make install
 
-You an now get at it from other Parrot programs as:
+If you do this, you will be able to use it from Rakudo (just make sure you
+use the same parrot_config as Rakudo did).
+
+If you want to get at it from other Parrot programs, it's as easy as:
 
   load_language 'perl5'
   $P0 = compreg 'perl5'
   $P1 = $P0.'compile'('print "chces ist na pivo?\n"')
   $P1()
 
-Alternatively, you can also do:
+You can also do:
 
-  make blizkost.exe # drop the .exe off Windows
+  make blizkost.exe # drop the .exe if not using Windows
 
 And you get an executable with a REPL that lets you run Perl 5 code.
 
@@ -35,7 +38,7 @@ enough to do:
 
   C:\Consulting\rakudo>perl6
   > eval('print "hello from perl 5\n";', :lang<perl5>)
-  hello from perl 5.10
+  hello from perl 5
 
 =head2 The Plan From Here
 
