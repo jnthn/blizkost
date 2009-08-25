@@ -1,0 +1,79 @@
+=head1 Blizkost
+
+Blizkost aims to make expose Perl 5 in Parrot and make it accessible through
+the standard HLLCompiler interface. It does this by embedding Perl 5, and
+then building out from there.
+
+=head2 How?
+
+First build and install:
+
+  perl Configure.pl --parrot-config=... # your path to installed Parrot
+  make
+  make install
+
+You an now get at it from other Parrot programs as:
+
+  load_language 'perl5'
+  $P0 = compreg 'perl5'
+  $P1 = $P0.'compile'('print "chces ist na pivo?\n"')
+  $P1()
+
+Alternatively, you can also do:
+
+  make blizkost.exe # drop the .exe off Windows
+
+And you get an executable with a REPL that lets you run Perl 5 code.
+
+=head2 Status
+
+Blizkost has only just got started! Right now, it supports enough for you to
+eval a string of Perl 5 code - and that is about it. Other languages that
+implement eval-style functionality by using load_language and compreg should
+find it will somewhat work for them. In Rakudo, we already have it working
+enough to do:
+
+  C:\Consulting\rakudo>perl6
+  > eval('print "hello from perl 5\n";', :lang<perl5>)
+  hello from perl 5.10
+
+=head2 The Plan From Here
+
+The next step is to try and do enough so that values returned from eval can
+be accessed in the calling language.
+
+Beyond that, I think it'll be a case of trying to implement the bits of
+the HLLCompiler interface so we might be able to do things in Rakudo like:
+
+  use Thingy :from<perl5>;
+
+However, getting that working could well be a huge amount of effort. So...
+
+=head2 Help!
+
+While I'm pretty happy with Parrot guts, Perl 5 guts are still something of an
+unknown to me. Thus all help on this project from those in the know, or who
+want to explore, will be very, very welcome. If you want a commit bit, just
+message me or catch me on #parrot (on irc.parrot.org) or #perl6 (on freenode)
+and note your interest in contributing.
+
+I'm also developing on Windows primarily, so if you find the build busted on
+your platform, please help fix it.
+
+=head2 Oh, and why the name?
+
+Blizkost is the Slovak word that, according to my Slovak to English dictionary,
+means things like "closeness", "contiguity" and "familiar". Since we're trying
+to build support between contiguous versions of the Perl programming language,
+version 5 of which is familiar, and our aim is to increase their closeness (that
+is, bring Perl 5 closer to the Perl 6 world so you can use Perl 5 code from Perl
+6), it seemed rather fitting. :-)
+
+=head2 You do know that the "t" is actually a soft consonant, right?
+
+Ano, viem...
+
+=head2 Who's to blame?
+
+Jonathan Worthington C<jnthn@jnthn.net> started the Blizkost project. He hopes
+others will join the fun too.

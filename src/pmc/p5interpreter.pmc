@@ -1,0 +1,184 @@
+/*
+Copyright (C) 2010, Jonathan Worthington
+$Id$
+
+=head1 NAME
+
+src/pmc/p5interpreter.pmc - Embeds a Perl 5 interpreter
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the P5Interpreter class.
+
+=cut
+
+*/
+
+/* Various Perl 5 headers that we need. */
+#include <EXTERN.h>
+#include <perl.h>
+
+/* The Perl interpreter. XXX Try and work out how to make an ATTR in future. */
+static PerlInterpreter *my_perl;
+static int my_perl_usage = 0;
+static int inited = 0;
+
+/*
+
+=head2 Helper functions
+
+=over 4
+
+=back
+
+=head2 Methods
+
+=over 4
+
+=cut
+
+*/
+
+pmclass P5Interpreter group blizkost_group dynpmc {
+    ATTR STRING *source;
+
+/*
+
+=item C<void init()>
+
+Set up P5Interpreter PMC.
+
+=cut
+
+*/
+
+    VTABLE void init() {
+        /* Set up the underlying structure. */
+        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Interpreter_attributes);
+        PObj_custom_mark_SET(SELF);
+        PObj_active_destroy_SET(SELF);
+
+        /* Inited before? */
+        if (!inited) {
+            int   fake_argc   = 1;
+            char *fake_argv[] = { "" };
+            char *fake_env[]  = { NULL };
+            PERL_SYS_INIT3(&fake_argc, &fake_argv, &fake_env);
+            inited = 1;
+        }
+
+        /* If we don't have an interpreter, create one. */
+        if (!my_perl_usage) {
+            /* Allocate interpreter. */
+            char *embedding[] = { "", "-e", "0" };
+            my_perl = perl_alloc();
+            perl_construct(my_perl);
+            perl_parse(my_perl, NULL, 3, embedding, NULL);
+            PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+            perl_run(my_perl);
+
+            /* We turn on auto-flush to avoid oddness in interactions between
+             * IO systems. */
+            eval_pv("$| = 1", TRUE);
+        }
+
+        /* Bump usage count. */
+        my_perl_usage++;
+    }
+
+/*
+
+=item C<void mark()>
+
+Mark source string, if we have one.
+
+=cut
+
+*/
+    VTABLE void mark() {
+        if (PMC_data(SELF)) {
+            STRING *source;
+            GETATTR_P5Interpreter_source(interp, SELF, source);
+            if (source)
+                Parrot_gc_mark_PObj_alive(interp, (PObj*)source);
+        }
+    }
+
+/*
+
+=item C<void destroy()>
+
+Destructor for the P5Interpreter PMC.
+
+=cut
+
+*/
+    VTABLE void destroy() {
+        /* Destroy interpreter if it's got no more usage. */
+        my_perl_usage--;
+        if (!my_perl_usage) {
+            perl_destruct(my_perl);
+            perl_free(my_perl);
+        }
+
+        /* Free underlying struct. */
+        mem_sys_free(PMC_data(SELF));
+        PMC_data(SELF) = NULL;
+    }
+
+/*
+
+=item C<void set_string_native(STRING *source)>
+
+Set the source code that we will run.
+
+=cut
+
+*/
+
+    VTABLE void set_string_native(STRING *source) {
+        SETATTR_P5Interpreter_source(interp, SELF, source);
+    }
+
+/*
+
+=item C<opcode_t *invoke(opcode_t *next)>
+
+Run the Perl 5 code.
+
+=cut
+
+*/
+
+    VTABLE opcode_t *invoke(opcode_t *next) {
+        STRING *source;
+        char   *c_source;
+
+        /* Get source into a C string so we can give it to Perl 5.
+         * XXX We'd best care about encodings and charset here some day. */
+        GETATTR_P5Interpreter_source(interp, SELF, source);
+        c_source = Parrot_str_to_cstring(interp, source);
+        
+        /* Evaluate it. XXX And later, care about the return value. */
+        eval_pv(c_source, TRUE);
+
+        /* Free memory associated with the string, and we're done. */
+        mem_sys_free(c_source);
+        return next;
+    }
+}
+
+/*
+
+=back
+
+=cut
+
+*/
+
+/*
+ * Local variables:
+ *   c-file-style: "parrot"
+ * End:
+ * vim: expandtab shiftwidth=4:
+ */

@@ -1,0 +1,32 @@
+#! perl
+
+# $Id$
+
+# pragmata
+use strict;
+use warnings;
+use Getopt::Long;
+use 5.008;
+
+our %harness_args = (
+    language  => 'blizkost',
+    verbosity => 0,
+);
+
+GetOptions(
+        'verbosity=i'       => \$harness_args{verbosity},
+        'bindir=s'          => \my $bindir,
+        # A sensible default is num_cores + 1.
+        # Many people have two cores these days.
+        'jobs:3'            => \$harness_args{jobs},
+);
+
+if ($bindir) {
+    $harness_args{exec} = [$bindir.'/parrot', 'blizkost.pbc'];
+}
+else {
+    $harness_args{compiler} = 'blizkost.pbc';
+}
+
+eval 'use Parrot::Test::Harness %harness_args';
+
