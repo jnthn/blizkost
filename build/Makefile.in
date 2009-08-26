@@ -71,9 +71,9 @@ perl5.pbc: $(SOURCES)
 
 blizkost@exe@: perl5.pbc
 	$(PBC_TO_EXE) perl5.pbc
-    $(CP) perl5@exe@ blizkost@exe@
-    $(RM_F) perl5@exe@
-#IF(win32):    copy $(BIN_DIR)\libparrot.dll .
+	$(CP) perl5@exe@ blizkost@exe@
+	$(RM_F) perl5@exe@
+#IF(win32):	copy $(BIN_DIR)\libparrot.dll .
 
 $(BLIZKOST_GROUP): $(PMC_DEPS)
 	$(MAKE) $(PMC_DIR)
@@ -82,8 +82,8 @@ installable: installable_blizkost@exe@
 
 installable_blizkost@exe@: perl5.pbc
 	$(PBC_TO_EXE) perl5.pbc --install
-    $(CP) installable_perl5@exe@ installable_blizkost@exe@
-    $(RM_F) installable_perl5@exe@
+	$(CP) installable_perl5@exe@ installable_blizkost@exe@
+	$(RM_F) installable_perl5@exe@
 
 Makefile: build/Makefile.in
 	$(PERL) Configure.pl
