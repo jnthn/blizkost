@@ -1,6 +1,5 @@
 /*
-Copyright (C) 2010, Jonathan Worthington
-$Id$
+Copyright (C) 2009, Jonathan Worthington and friends
 
 =head1 NAME
 
@@ -158,7 +157,7 @@ Run the Perl 5 code.
          * XXX We'd best care about encodings and charset here some day. */
         GETATTR_P5Interpreter_source(interp, SELF, source);
         c_source = Parrot_str_to_cstring(interp, source);
-        
+
         /* Evaluate it. XXX And later, care about the return value. */
         eval_pv(c_source, TRUE);
 
