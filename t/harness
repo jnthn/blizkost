@@ -8,6 +8,8 @@ use warnings;
 use Getopt::Long;
 use 5.008;
 
+my $pbc = 'perl5.pbc';
+
 our %harness_args = (
     language  => 'blizkost',
     verbosity => 0,
@@ -22,10 +24,10 @@ GetOptions(
 );
 
 if ($bindir) {
-    $harness_args{exec} = [$bindir.'/parrot', 'blizkost.pbc'];
+    $harness_args{exec} = [$bindir.'/parrot', $pbc ];
 }
 else {
-    $harness_args{compiler} = 'blizkost.pbc';
+    $harness_args{compiler} = $pbc;
 }
 
 eval 'use Parrot::Test::Harness %harness_args';
