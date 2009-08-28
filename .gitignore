@@ -20,3 +20,5 @@ src/pmc/*.obj
 src/pmc/*.pdb
 src/pmc/*.so
 
+core*
+*.sw?
