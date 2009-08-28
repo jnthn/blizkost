@@ -138,10 +138,10 @@ uninstall:
 	$(RM_RF) $(DOC_DIR)/languages/perl5
 
 win32-inno-installer: installable
-	-$(MKPATH) man/man1
-	$(POD2MAN) doc/running.pod > man/man1/parrot-blizkost.1
-	-$(MKPATH) man/html
-	pod2html --infile doc/running.pod --outfile man/html/parrot-blizkost.html
+#	-$(MKPATH) man/man1
+#	$(POD2MAN) doc/running.pod > man/man1/parrot-blizkost.1
+#	-$(MKPATH) man/html
+#	pod2html --infile doc/running.pod --outfile man/html/parrot-blizkost.html
 	$(CP) installable_blizkost@exe@ parrot-blizkost.exe
 	$(PERL) -I$(LIB_DIR)/tools/lib $(LIB_DIR)/tools/dev/mk_inno_language.pl blizkost
 	iscc parrot-blizkost.iss
