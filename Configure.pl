@@ -1,8 +1,6 @@
-# $Id$
-
 =head1 NAME
 
-Configure.pl - a configure script for a high level language running on Parrot
+Configure.pl - a configure script for Blizkost
 
 =head1 SYNOPSIS
 
@@ -26,6 +24,12 @@ use Getopt::Long qw(:config auto_help);
 our ( $opt_parrot_config, $opt_gen_parrot);
 GetOptions( 'parrot-config=s', 'gen-parrot' );
 
+print <<HELLO;
+
+Hello, I'm Configure. My job is to poke and prod your system to figure out
+how to build Blizkost.
+
+HELLO
 #  Update/generate parrot build if needed
 if ($opt_gen_parrot) {
     system($^X, 'build/gen_parrot.pl', @ARGV);
@@ -99,6 +103,16 @@ print "$build_tool\n";
         system($config{perl}, $build_tool, $template, $makefile);
     }
 }
+
+print <<BYE;
+Okay, we're done!
+
+You can now use `make' to build your Blizkost library, or 'make blizkost' to
+build the binary.  After that, you can use `make test' to run the test suite.
+
+Happy Hacking,
+        The Blizkost Team
+BYE
 
 # Local Variables:
 #   mode: cperl
