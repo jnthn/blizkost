@@ -71,8 +71,7 @@ blizkost@exe@: perl5.pbc
 	$(PBC_TO_EXE) perl5.pbc
 	$(CP) perl5@exe@ blizkost@exe@
 	$(RM_F) perl5@exe@
-	chmod +x blizkost@exe@
-
+	$(CHMOD) +x blizkost@exe@
 #IF(win32):	copy $(BIN_DIR)\libparrot.dll .
 
 $(BLIZKOST_GROUP): $(PMC_DEPS)
