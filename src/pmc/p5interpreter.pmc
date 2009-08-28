@@ -153,6 +153,7 @@ Run the Perl 5 code.
     VTABLE opcode_t *invoke(opcode_t *next) {
         STRING *source;
         char   *c_source;
+        SV     *return_code;
 
         /* Get source into a C string so we can give it to Perl 5.
          * XXX We'd best care about encodings and charset here some day. */
@@ -160,7 +161,7 @@ Run the Perl 5 code.
         c_source = Parrot_str_to_cstring(interp, source);
 
         /* Evaluate it. XXX And later, care about the return value. */
-        eval_pv(c_source, TRUE);
+        return_code = eval_pv(c_source, TRUE);
 
         /* Free memory associated with the string, and we're done. */
         mem_sys_free(c_source);
