@@ -26,6 +26,8 @@ CFLAGS        := @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@
 CC_OUT        := @cc_o_out@
 LD_OUT        := @ld_out@
 LIBPARROT     := @inst_libparrot_ldflags@
+#IF(win32):LIBPERL       := $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
+#UNLESS(win32):LIBPERL       := -lperl
 
 PMC2C_INCLUDES  := --include $(SRC_DIR) --include $(SRC_DIR)/pmc
 PMC2C           := $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
@@ -33,7 +35,7 @@ PMC2CD          := $(PMC2C) --dump $(PMC2C_INCLUDES)
 PMC2CC          := $(PMC2C) --c $(PMC2C_INCLUDES)
 
 INCLUDES        := -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
-LINKARGS        := $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
+LINKARGS        := $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
 
 BLIZKOST_GROUP := blizkost_group
 
