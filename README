@@ -1,8 +1,8 @@
 =head1 Blizkost
 
-Blizkost aims to make expose Perl 5 in Parrot and make it accessible through
-the standard HLLCompiler interface. It does this by embedding Perl 5, and
-then building out from there.
+Blizkost exposes Perl 5 in Parrot and make it accessible through the standard
+HLLCompiler interface. It does this by embedding Perl 5, and then building out
+from there.
 
 =head2 How?
 
