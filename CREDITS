@@ -1,0 +1,34 @@
+=pod
+
+    Following in the steps of other open source projects that
+    eventually take over the world, here is the partial list
+    of people who have contributed to Blizkost and its supporting
+    works. It is sorted by name and formatted to allow easy
+    searching and beautification by scripts.
+    The fields are: name (N), email (E), web-address (W),
+    description (D), subversion username (U) and snail-mail
+    address (S).
+
+        Thanks,
+
+        The Blizkost Team
+        PS: This file is encoded in UTF-8
+
+----------
+N: François Perrad
+E: francois.perrad@gadz.org
+W: http://fperrad.googlepages.com/home
+U: fperrad
+
+N: Jonathan "Duke" Leto
+U: leto
+E: jonathan@leto.net
+W: http://leto.net
+S: Portland, OR
+
+N: Jonathan Worthington
+U: jnthn
+E: jnthn@jnthn.net
+W: http://www.jnthn.net/
+
+=cut
