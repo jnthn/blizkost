@@ -23,6 +23,7 @@ MAKE          := @make_c@
 PERL          := @perl@
 CAT           := @cat@
 CHMOD         := @chmod@
+#IF(darwin):CHMOD     := chmod
 CP            := @cp@
 MKPATH        := @mkpath@
 RM_F          := @rm_f@
