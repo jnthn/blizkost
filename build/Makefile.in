@@ -83,6 +83,7 @@ installable_blizkost@exe@: perl5.pbc
 	$(PBC_TO_EXE) perl5.pbc --install
 	$(CP) installable_perl5@exe@ installable_blizkost@exe@
 	$(RM_F) installable_perl5@exe@
+	$(CHMOD) +x installable_blizkost@exe@
 
 Makefile: build/Makefile.in
 	$(PERL) Configure.pl
