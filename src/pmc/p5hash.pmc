@@ -1,14 +1,14 @@
 /*
-Copyright (C) 2010, Stéphane Payrard
+Copyright (C) 2009, Jonathan Worthington and friends
 $Id$
 
 =head1 NAME
 
-src/pmc/p5scalar.pmc - pmc for Perl 5 hash type
+src/pmc/p5hash.pmc - pmc for Perl 5 hash type
 
 =head1 DESCRIPTION
 
-These are the vtable functions for the P5Hash data
+These are the vtable functions for the P5Hash class
 
 =cut
 

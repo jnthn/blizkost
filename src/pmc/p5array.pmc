@@ -1,14 +1,14 @@
 /*
-Copyright (C) 2010, Stéphane Payrard
+Copyright (C) 2009, Jonathan Worthington and friends
 $Id$
 
 =head1 NAME
 
-src/pmc/p5scalar.pmc - pmc for the array type
+src/pmc/p5array.pmc - pmc for the Perl 5 array type
 
 =head1 DESCRIPTION
 
-These are the vtable functions for the P5Interpreter class.
+These are the vtable functions for the P5Array class.
 
 =cut
 

@@ -39,8 +39,14 @@ BLIZKOST_GROUP := $(PMC_DIR)/blizkost_group$(LOAD_EXT)
 
 PMC_DEPS := build/src/pmc/Makefile.in $(PMC_DIR)/p5interpreter.pmc
 
+BUILTINS_PIR := \
+  src/classes/Scalar.pir \
+  src/classes/Scalar.pir \
+  src/classes/Hash.pir
+
 SOURCES := \
-  perl5.pir
+  perl5.pir \
+  $(BUILTINS_PIR)
 
 DOCS := README
 
@@ -76,6 +82,10 @@ blizkost@exe@: perl5.pbc
 
 $(BLIZKOST_GROUP): $(PMC_DEPS)
 	$(MAKE) $(PMC_DIR)
+
+
+src/gen_builtins.pir: build/gen_builtins_pir.pl
+	$(PERL) build/gen_builtins_pir.pl $(BUILTINS_PIR) > src/gen_builtins.pir
 
 installable: installable_blizkost@exe@
 
