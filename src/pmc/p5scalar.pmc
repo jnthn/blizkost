@@ -1,0 +1,71 @@
+/*
+Copyright (C) 2010, Stéphane Payrard
+$Id$
+
+=head1 NAME
+
+src/pmc/p5scalar.pmc - pmc for Perl 5 array type
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the P5Interpreter class.
+
+=cut
+
+*/
+
+/* Various Perl 5 headers that we need. */
+#include <EXTERN.h>
+#include <perl.h>
+
+#define getSv(pmc) = ((SV*) PMC_data(pmc))
+#define getSelfSV = getSv(SELF)
+
+pmclass P5Scalar group blizkost_group dynpmc {
+
+/*
+
+=item C<void init()>
+
+Set up P5Scalar PMC.
+
+
+=cut
+
+*/
+
+    VTABLE void init() {
+      getSelfSV = Perl_newSV(0);
+    }
+
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns the boolean value of the P5Scalar
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_bool() {
+        return SELF.get_integer() ? 1 : 0;
+    }
+
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Returns the integer value of the Integer.
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_integer() {
+    }
+
+
+}

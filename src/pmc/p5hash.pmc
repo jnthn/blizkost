@@ -1,0 +1,24 @@
+/*
+Copyright (C) 2010, Stéphane Payrard
+$Id$
+
+=head1 NAME
+
+src/pmc/p5scalar.pmc - pmc for Perl 5 hash type
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the P5Hash data
+
+=cut
+
+*/
+
+pmclass P5Hash group blizkost_group dynpmc provides hash  {
+    VTABLE void init() {
+    }
+
+    VTABLE PMC *get_pmc_keyed_str(STRING *key) {
+    }
+
+}

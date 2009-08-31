@@ -42,11 +42,17 @@ LINKARGS        := $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
 BLIZKOST_GROUP := blizkost_group
 
 PMC_SOURCES := \
-  p5interpreter.pmc
+  p5interpreter.pmc \
+  p5scalar.pmc \
+  p5array.pmc  \
+  p5hash.pmc
 
 OBJS := \
   lib-$(BLIZKOST_GROUP)$(O) \
   blizkost$(O)
+
+BUILTINS_PIR = \
+  src/classes/Scalar.pir
 
 CLEANUPS := \
   "*$(LOAD_EXT)" \
@@ -67,6 +73,12 @@ all: staging
 generate: $(PMC_SOURCES)
 	$(PMC2CD) p5interpreter.pmc
 	$(PMC2CC) p5interpreter.pmc
+	$(PMC2CD) p5scalar.pmc
+	$(PMC2CC) p5scalar.pmc
+	$(PMC2CD) p5array.pmc
+	$(PMC2CC) p5array.pmc
+	$(PMC2CD) p5hash.pmc
+	$(PMC2CC) p5hash.pmc
 	$(PMC2C) --library $(BLIZKOST_GROUP) --c $(PMC_SOURCES)
 
 compile: generate

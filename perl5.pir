@@ -70,7 +70,7 @@ to the blizkost compiler.
     .param pmc args            :slurpy
     .param pmc adverbs         :slurpy :named
     
-    $P0 = self.'compile'(code, args :flat, adverbs :flat :named)
+    $P0 = self.'compile'(code, adverbs :flat :named)
     $P0()
     .return ("")
 .end

@@ -1,0 +1,18 @@
+/*
+Copyright (C) 2010, Stéphane Payrard
+$Id$
+
+=head1 NAME
+
+src/pmc/p5scalar.pmc - pmc for the array type
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the P5Interpreter class.
+
+=cut
+
+*/
+
+pmclass P5Array provides array group blizkost_group dynpmc  {
+}
