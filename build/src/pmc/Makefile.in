@@ -45,7 +45,9 @@ PMC_SOURCES := \
   p5interpreter.pmc \
   p5scalar.pmc \
   p5array.pmc  \
-  p5hash.pmc
+  p5hash.pmc   \
+  p5sub.pmc    \
+  p5namespace.pmc
 
 PMC_C := $(PMC_SOURCES:.pmc=.c)
 PMC_O := $(PMC_SOURCES:.pmc=$(O))
@@ -80,6 +82,8 @@ compile: generate
 	$(CC) $(CC_OUT) p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
 	$(CC) $(CC_OUT) p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
 	$(CC) $(CC_OUT) p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
+	$(CC) $(CC_OUT) p5sub$(O)  $(INCLUDES) $(CFLAGS) p5sub.c
+	$(CC) $(CC_OUT) p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
 	$(CC) $(CC_OUT) p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
 	$(CC) $(CC_OUT) lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
 

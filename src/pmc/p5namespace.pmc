@@ -1,0 +1,67 @@
+/*
+Copyright (C) 2009, Jonathan Worthington and friends
+$Id$
+
+=head1 NAME
+
+src/pmc/p5namespace.pmc - pmc for Perl 5 namespace type
+
+=head1 DESCRIPTION
+
+These are the vtable functions for the P5Namespace class.
+
+=cut
+
+*/
+
+/* Various Perl 5 headers that we need. */
+#include <EXTERN.h>
+#include <perl.h>
+
+pmclass P5Namespace group blizkost_group dynpmc {
+
+/*
+
+=item C<void init()>
+
+Set up P5Namespace PMC.
+
+
+=cut
+
+*/
+
+    VTABLE void init() {
+    }
+
+
+/*
+
+=item C<INTVAL get_bool()>
+
+Returns the boolean value of the P5Namespace
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_bool() {
+        return SELF.get_integer() ? 1 : 0;
+    }
+
+
+/*
+
+=item C<INTVAL get_integer()>
+
+Returns the integer value of the Integer.
+
+=cut
+
+*/
+
+    VTABLE INTVAL get_integer() {
+    }
+
+
+}
