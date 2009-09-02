@@ -55,9 +55,20 @@ to the blizkost compiler.
     .param string source
     .param pmc adverbs      :slurpy :named
 
-    $P0 = new 'P5Interpreter'
-    $P0 = source
-    .return ($P0)
+    # We maintain a persistent P5Interpreter per Parrot interpreter. Should
+    # be a reasonable stratergy, or at least we'll try it until somebody can
+    # say why it's wrong and give us a better one.
+    .local pmc parrot_interp, p5i
+    parrot_interp = getinterp
+    p5i = getprop '$!p5i', parrot_interp
+    unless null p5i goto have_interp
+    p5i = new 'P5Interpreter'
+    setprop parrot_interp, '$!p5i', p5i
+  have_interp:
+
+    # Set current "to eval" source code, and we're done.
+    p5i = source
+    .return (p5i)
 .end
 
 

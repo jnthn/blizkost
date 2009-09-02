@@ -38,8 +38,28 @@ Set up P5Scalar PMC.
     VTABLE void init() {
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Scalar_attributes);
+        PObj_custom_mark_SET(SELF);
         PObj_active_destroy_SET(SELF);
     }
+
+/*
+
+=item C<void mark()>
+
+Mark GC-ables.
+
+=cut
+
+*/
+    VTABLE void mark() {
+        if (PMC_data(SELF)) {
+            PMC *p5i;
+            GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+            if (p5i)
+                Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
+        }
+    }
+
 
 /*
 

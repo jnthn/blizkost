@@ -19,9 +19,7 @@ These are the vtable functions for the P5Interpreter class.
 /* Need to know a bit about other PMCs. */
 #include "pmc_p5scalar.h"
 
-/* The Perl interpreter. XXX Try and work out how to make an ATTR in future. */
-static PerlInterpreter *my_perl;
-static int my_perl_usage = 0;
+/* Tracking of whether we've initialized or not. */
 static int inited = 0;
 
 /*
@@ -41,8 +39,8 @@ static int inited = 0;
 */
 
 pmclass P5Interpreter group blizkost_group dynpmc {
-    ATTR struct PerlInterpreter *my_perl;
-    ATTR STRING                 *source;
+    ATTR struct interpreter *my_perl;
+    ATTR STRING             *source;
 
 /*
 
@@ -55,6 +53,9 @@ Set up P5Interpreter PMC.
 */
 
     VTABLE void init() {
+        struct interpreter *my_perl;
+        char *embedding[] = { "", "-e", "0" };
+
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Interpreter_attributes);
         PObj_custom_mark_SET(SELF);
@@ -69,26 +70,17 @@ Set up P5Interpreter PMC.
             inited = 1;
         }
 
-        /* If we don't have an interpreter, create one. */
-        if (!my_perl_usage) {
-            /* Allocate interpreter. */
-            char *embedding[] = { "", "-e", "0" };
-            my_perl = perl_alloc();
-            perl_construct(my_perl);
-            perl_parse(my_perl, xs_init, 3, embedding, NULL);
-            PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-            perl_run(my_perl);
-
-            /* We turn on auto-flush to avoid oddness in interactions between
-             * IO systems. */
-            eval_pv("$| = 1", TRUE);
-        }
-
-        /* Stash interpreter in struct. */
+        /* Allocate interpreter and stash it in struct. */
+        my_perl = perl_alloc();
+        perl_construct(my_perl);
+        perl_parse(my_perl, xs_init, 3, embedding, NULL);
+        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+        perl_run(my_perl);
         SETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
 
-        /* Bump usage count. */
-        my_perl_usage++;
+        /* We turn on auto-flush to avoid oddness in interactions between
+         * IO systems. */
+        eval_pv("$| = 1", TRUE);
     }
 
 /*
@@ -119,13 +111,17 @@ Destructor for the P5Interpreter PMC.
 
 */
     VTABLE void destroy() {
+        struct interpreter *my_perl;
+
         /* Destroy interpreter if it's got no more usage. */
-        my_perl_usage--;
-        if (!my_perl_usage) {
-            perl_destruct(my_perl);
-            perl_free(my_perl);
-            PERL_SYS_TERM();
-        }
+        GETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
+        perl_destruct(my_perl);
+        perl_free(my_perl);
+        
+        /* XXX We should only call PERL_SYS_TERM right at the end, not per
+         * interpreter destroy. Skip doing it for now at all, but need to
+         * work out where to put this. */
+        /*PERL_SYS_TERM();*/
 
         /* Free underlying struct. */
         mem_sys_free(PMC_data(SELF));
@@ -157,6 +153,7 @@ Run the Perl 5 code.
 */
 
     VTABLE opcode_t *invoke(opcode_t *next) {
+        struct interpreter *my_perl;
         PMC    *result, *ns_key, *ns, *return_helper;
         STRING *source;
         char   *c_source;
@@ -168,6 +165,7 @@ Run the Perl 5 code.
         c_source = Parrot_str_to_cstring(interp, source);
 
         /* Evaluate it. */
+        GETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
         return_code = eval_pv(c_source, TRUE);
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
         SETATTR_P5Scalar_p5i(interp, result, SELF);
