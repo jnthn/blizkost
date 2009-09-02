@@ -77,7 +77,7 @@ CLEANUPS := \
 all: staging
 
 init_with_xs.h:
-    $(PERL) -MExtUtils::Embed -e xsinit -- -o init_with_xs.h
+	$(PERL) -MExtUtils::Embed -e xsinit -- -o init_with_xs.h
 
 generate: init_with_xs.h $(PMC_SOURCES)
 	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $(PMC_SOURCES)
