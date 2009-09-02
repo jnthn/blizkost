@@ -77,11 +77,11 @@ generate: $(PMC_SOURCES)
 	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) --c $(PMC_SOURCES)
 
 compile: generate
-	$(CC) $(CC_OUT) p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
-	$(CC) $(CC_OUT) p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
-	$(CC) $(CC_OUT) p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
-	$(CC) $(CC_OUT) p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
-	$(CC) $(CC_OUT) lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
+	$(CC) $(CC_OUT)p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
+	$(CC) $(CC_OUT)p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
+	$(CC) $(CC_OUT)p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
+	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
+	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
 
 linklibs: compile
 	$(LD) $(LD_OUT)$(BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)
