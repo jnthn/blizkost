@@ -39,14 +39,8 @@ BLIZKOST_GROUP := $(PMC_DIR)/blizkost_group$(LOAD_EXT)
 
 PMC_DEPS := build/src/pmc/Makefile.in $(PMC_DIR)/p5interpreter.pmc
 
-BUILTINS_PIR := \
-  src/classes/Scalar.pir \
-  src/classes/Scalar.pir \
-  src/classes/Hash.pir
-
 SOURCES := \
-  perl5.pir \
-  $(BUILTINS_PIR)
+  perl5.pir
 
 DOCS := README
 

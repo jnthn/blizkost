@@ -52,7 +52,10 @@ PMC_O := $(PMC_SOURCES:.pmc=$(O))
 
 OBJS := \
   lib-$(BLIZKOST_GROUP)$(O) \
-  $(PMC_O)
+  p5scalar$(O) \
+  p5array$(O) \
+  p5hash$(O) \
+  p5interpreter$(O) \
 
 CLEANUPS := \
   "*$(LOAD_EXT)" \
