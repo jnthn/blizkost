@@ -103,6 +103,19 @@ code.
     .return ($P0)
 .end
 
+
+=item load_library
+
+Implements the HLLCompiler library loading interface.
+
+=cut
+
+.sub 'load_library' :method
+    .param pmc name
+    .param pmc extra :named :slurpy
+    die 'Sorry, library loading from Perl 5 is not yet implemented.'
+.end
+
 =back
 
 =cut
