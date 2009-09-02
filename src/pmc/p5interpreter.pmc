@@ -151,6 +151,7 @@ Run the Perl 5 code.
 */
 
     VTABLE opcode_t *invoke(opcode_t *next) {
+        PMC    *result, *ns_key, *ns, *return_helper;
         STRING *source;
         char   *c_source;
         SV     *return_code;
@@ -160,8 +161,25 @@ Run the Perl 5 code.
         GETATTR_P5Interpreter_source(interp, SELF, source);
         c_source = Parrot_str_to_cstring(interp, source);
 
-        /* Evaluate it. XXX And later, care about the return value. */
+        /* Evaluate it. XXX And later, build scalar PMC from returned SV - instead
+         * just hand back a fake value now. */
         return_code = eval_pv(c_source, TRUE);
+        result = pmc_new(interp, enum_class_Integer);
+        VTABLE_set_integer_native(interp, result, 42);
+
+        /* Look up return helper. */
+        ns_key = pmc_new(interp, enum_class_ResizableStringArray);
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "parrot"));
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Perl5"));
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Compiler"));
+        ns = Parrot_get_namespace_keyed(interp, interp->root_namespace, ns_key);
+        return_helper = VTABLE_get_pmc_keyed_str(interp, ns, CONST_STRING(interp, "!return_value_helper"));
+
+        /* Clone it and use property to attach return value (the helper just
+         * handles PCC for us). */
+        return_helper = VTABLE_clone(interp, return_helper);
+        VTABLE_setprop(interp, return_helper, CONST_STRING(interp, "$!ret_val"), result);
+        next = VTABLE_invoke(interp, return_helper, next);
 
         /* Free memory associated with the string, and we're done. */
         mem_sys_free(c_source);
