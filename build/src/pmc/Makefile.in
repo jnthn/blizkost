@@ -76,8 +76,10 @@ CLEANUPS := \
 
 all: staging
 
+init_with_xs.h:
+    $(PERL) -MExtUtils::Embed -e xsinit -- -o init_with_xs.h
 
-generate: $(PMC_SOURCES)
+generate: init_with_xs.h $(PMC_SOURCES)
 	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $(PMC_SOURCES)
 	$(PMC2C) --no-lines --c $(PMC2C_INCLUDES) $(PMC_SOURCES)
 	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) --c $(PMC_SOURCES)
