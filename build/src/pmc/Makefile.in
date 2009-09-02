@@ -87,8 +87,8 @@ compile: generate
 	$(CC) $(CC_OUT)p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
 	$(CC) $(CC_OUT)p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
 	$(CC) $(CC_OUT)p5sub$(O)  $(INCLUDES) $(CFLAGS) p5sub.c
-    $(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
-    $(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
+	$(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
+	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
 	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
 
 linklibs: compile
