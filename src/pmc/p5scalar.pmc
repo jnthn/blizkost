@@ -18,10 +18,12 @@ These are the vtable functions for the P5Scalar class.
 #include <EXTERN.h>
 #include <perl.h>
 
-#define getSv(pmc) = ((SV*) PMC_data(pmc))
-#define getSelfSV = getSv(SELF)
+/* Plus need to know about the interpreter. */
+#include "pmc_p5interpreter.h"
 
 pmclass P5Scalar group blizkost_group dynpmc {
+    ATTR PMC       *p5i;
+    ATTR struct sv *sv;    
 
 /*
 
@@ -29,20 +31,21 @@ pmclass P5Scalar group blizkost_group dynpmc {
 
 Set up P5Scalar PMC.
 
-
 =cut
 
 */
 
     VTABLE void init() {
+        /* Set up the underlying structure. */
+        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Scalar_attributes);
+        PObj_active_destroy_SET(SELF);
     }
-
 
 /*
 
 =item C<INTVAL get_bool()>
 
-Returns the boolean value of the P5Scalar
+Returns the boolean value of the SV.
 
 =cut
 
@@ -52,19 +55,65 @@ Returns the boolean value of the P5Scalar
         return SELF.get_integer() ? 1 : 0;
     }
 
-
 /*
 
 =item C<INTVAL get_integer()>
 
-Returns the integer value of the Integer.
+Returns the integer value of the SV.
 
 =cut
 
 */
 
     VTABLE INTVAL get_integer() {
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *sv;
+        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        return SvIV(sv);
     }
 
+/*
+
+=item C<NUMVAL get_integer()>
+
+Returns the number value of the SV.
+
+=cut
+
+*/
+
+    VTABLE FLOATVAL get_number() {
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *sv;
+        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        return SvNV(sv);
+    }
+
+/*
+
+=item C<STRING *get_string()>
+
+Returns the string value of the SV.
+
+=cut
+
+*/
+    VTABLE STRING *get_string() {
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *sv;
+        char            *perl5_str;
+        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        perl5_str = SvPVutf8_nolen(sv);
+        return Parrot_str_new(interp, perl5_str, strlen(perl5_str));
+    }
 
 }

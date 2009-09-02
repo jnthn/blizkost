@@ -17,6 +17,9 @@ These are the vtable functions for the P5Interpreter class.
 #include <EXTERN.h>
 #include <perl.h>
 
+/* Need to know a bit about other PMCs. */
+#include "pmc_p5scalar.h"
+
 /* The Perl interpreter. XXX Try and work out how to make an ATTR in future. */
 static PerlInterpreter *my_perl;
 static int my_perl_usage = 0;
@@ -39,7 +42,8 @@ static int inited = 0;
 */
 
 pmclass P5Interpreter group blizkost_group dynpmc {
-    ATTR STRING *source;
+    ATTR struct PerlInterpreter *my_perl;
+    ATTR STRING                 *source;
 
 /*
 
@@ -80,6 +84,9 @@ Set up P5Interpreter PMC.
              * IO systems. */
             eval_pv("$| = 1", TRUE);
         }
+
+        /* Stash interpreter in struct. */
+        SETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
 
         /* Bump usage count. */
         my_perl_usage++;
@@ -161,11 +168,11 @@ Run the Perl 5 code.
         GETATTR_P5Interpreter_source(interp, SELF, source);
         c_source = Parrot_str_to_cstring(interp, source);
 
-        /* Evaluate it. XXX And later, build scalar PMC from returned SV - instead
-         * just hand back a fake value now. */
+        /* Evaluate it. */
         return_code = eval_pv(c_source, TRUE);
-        result = pmc_new(interp, enum_class_Integer);
-        VTABLE_set_integer_native(interp, result, 42);
+        result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
+        SETATTR_P5Scalar_p5i(interp, result, SELF);
+        SETATTR_P5Scalar_sv(interp, result, return_code);
 
         /* Look up return helper. */
         ns_key = pmc_new(interp, enum_class_ResizableStringArray);

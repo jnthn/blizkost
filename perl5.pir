@@ -71,8 +71,25 @@ to the blizkost compiler.
     .param pmc adverbs         :slurpy :named
     
     $P0 = self.'compile'(code, adverbs :flat :named)
-    $P0()
-    .return ("")
+    ($P1 :slurpy, $P2 :slurpy :named)  = $P0()
+    .return ($P1 :flat, $P2 :flat :named)
+.end
+
+
+=item !return_value_helper
+
+This is a little helper routine to save us having to mess around with the
+Parrot calling conventions to be able to return a value from some eval'd
+code.
+
+=cut
+
+.sub '!return_value_helper'
+    # Get the attached return value.
+    $P0 = getinterp
+    $P0 = $P0['sub']
+    $P0 = getprop '$!ret_val', $P0
+    .return ($P0)
 .end
 
 =back
