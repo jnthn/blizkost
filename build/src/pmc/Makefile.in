@@ -6,8 +6,8 @@ INCLUDE_DIR   := @includedir@$(VERSION_DIR)
 LIB_DIR       := @libdir@$(VERSION_DIR)
 SRC_DIR       := @srcdir@$(VERSION_DIR)
 TOOLS_DIR     := @libdir@$(VERSION_DIR)/tools/lib
-STAGING_DIR   := @build_dir@/runtime/parrot/dynext
-INSTALL_DIR   := $(LIB_DIR)/dynext
+STAGING_DIR   := ../../dynext
+INSTALL_DIR   := $(LIB_DIR)/languages/blizkost/dynext
 
 # Set up extensions
 LOAD_EXT      := @load_ext@
@@ -16,6 +16,7 @@ O             := @o@
 # Setup some commands
 PERL          := @perl@
 RM_F          := @rm_f@
+MKPATH        := @mkpath@
 CHMOD         := @chmod@
 CP            := @cp@
 CC            := @cc@ -c
@@ -90,7 +91,7 @@ compile: generate
 	$(CC) $(CC_OUT)p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
 	$(CC) $(CC_OUT)p5sub$(O)  $(INCLUDES) $(CFLAGS) p5sub.c
 	$(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
-	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c 
+	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c
 	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
 
 linklibs: compile
@@ -102,6 +103,7 @@ staging: linklibs
 
 install:
 #IF(cygwin or hpux):	CHMOD 0775 "*$(LOAD_EXT)"
+	$(MKPATH) $(INSTALL_DIR)
 	$(CP) "*$(LOAD_EXT)" $(INSTALL_DIR)
 
 uninstall:
