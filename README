@@ -6,7 +6,8 @@ from there.
 
 =head2 How?
 
-First build and install:
+First build and install (requires an installed parrot,
+including C<make install-dev>):
 
   perl Configure.pl --parrot-config=... # path to installed parrot_config
   make
