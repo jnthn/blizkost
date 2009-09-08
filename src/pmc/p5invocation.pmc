@@ -1,0 +1,105 @@
+/*
+Copyright (C) 2009, Jonathan Worthington and friends
+$Id$
+
+=head1 NAME
+
+src/pmc/p5invocation.pmc - Perl 5 method invocation helper
+
+=head1 DESCRIPTION
+
+This PMC is used to map the invocation of a Perl 5 method onto the Parrot
+invocation model and calling conventions.
+
+=cut
+
+*/
+
+/* Various Perl 5 headers that we need. */
+#include <EXTERN.h>
+#include <perl.h>
+
+/* Plus need to know about the interpreter. */
+#include "pmc_p5interpreter.h"
+
+pmclass P5Invocation group blizkost_group dynpmc {
+    ATTR PMC       *p5i;
+    ATTR struct sv *invocant;
+    ATTR STRING    *name;
+
+/*
+
+=item C<void init()>
+
+Set up P5Invocation PMC.
+
+=cut
+
+*/
+
+    VTABLE void init() {
+        /* Set up the underlying structure. */
+        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Invocation_attributes);
+        PObj_custom_mark_SET(SELF);
+        PObj_active_destroy_SET(SELF);
+    }
+
+/*
+
+=item C<void mark()>
+
+Mark GC-ables.
+
+=cut
+
+*/
+    VTABLE void mark() {
+        if (PMC_data(SELF)) {
+            PMC *p5i;
+            GETATTR_P5Invocation_p5i(interp, SELF, p5i);
+            if (p5i)
+                Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
+        }
+    }
+
+/*
+
+=item C<void *invoke(void *next)>
+
+Handles the actual invocation.
+
+XXX TODO: Also pass arguments along.
+
+XXX TODO: Return value handling
+
+=cut
+
+*/
+    VTABLE opcode_t *invoke(void *next) {
+        STRING          *name;
+        char            *c_name;
+        struct sv       *invocant;
+        int              num_returns;
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        
+        /* Get the interpreter, SV and the name. */
+        GETATTR_P5Invocation_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GETATTR_P5Invocation_name(interp, SELF, name);
+        c_name = Parrot_str_to_cstring(interp, name);
+        GETATTR_P5Invocation_invocant(interp, SELF, invocant);
+
+        /* Set up the stack and invoke the method. */
+        {
+            dSP;
+            PUSHMARK(SP);
+            XPUSHs(invocant);
+            PUTBACK;
+            num_returns = call_method(c_name, G_ARRAY | G_DISCARD);
+        }
+
+        /* Parrot bytecode location shouldn't move. */
+        return next;
+    }
+}
