@@ -104,6 +104,21 @@ code.
 .end
 
 
+=item !return_value_helper_arr
+
+Like !return_value_helper but takes an array of many return values and
+flattens it.
+
+=cut
+
+.sub '!return_value_helper_arr'
+    $P0 = getinterp
+    $P0 = $P0['sub']
+    $P0 = getprop '$!ret_val', $P0
+    .return ($P0 :flat)
+.end
+
+
 =item load_library
 
 Implements the HLLCompiler library loading interface.

@@ -19,8 +19,9 @@ invocation model and calling conventions.
 #include <EXTERN.h>
 #include <perl.h>
 
-/* Plus need to know about the interpreter. */
+/* Plus need to know about the interpreter and scalar wrapper. */
 #include "pmc_p5interpreter.h"
+#include "pmc_p5scalar.h"
 
 pmclass P5Invocation group blizkost_group dynpmc {
     ATTR PMC       *p5i;
@@ -79,8 +80,8 @@ XXX TODO: Return value handling
         STRING          *name;
         char            *c_name;
         struct sv       *invocant;
-        int              num_returns;
-        PMC             *p5i;
+        int              num_returns, i;
+        PMC             *p5i, *results, *ns, *ns_key, *return_helper;
         PerlInterpreter *my_perl;
         
         /* Get the interpreter, SV and the name. */
@@ -90,16 +91,36 @@ XXX TODO: Return value handling
         c_name = Parrot_str_to_cstring(interp, name);
         GETATTR_P5Invocation_invocant(interp, SELF, invocant);
 
-        /* Set up the stack and invoke the method. */
         {
+            /* Set up the stack and invoke the method. */
             dSP;
             PUSHMARK(SP);
             XPUSHs(invocant);
+            /* XXX: Params. */
             PUTBACK;
-            num_returns = call_method(c_name, G_ARRAY | G_DISCARD);
+            num_returns = call_method(c_name, G_ARRAY);
+
+            /* Build the results PMC array. */
+            results = pmc_new(interp, enum_class_ResizablePMCArray);
+            for (i = 0; i < num_returns; i++) {
+                struct sv *result_sv = POPs;
+                PMC *result_pmc = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
+                SETATTR_P5Scalar_p5i(interp, result_pmc, SELF);
+                SETATTR_P5Scalar_sv(interp, result_pmc, result_sv);
+                VTABLE_unshift_pmc(interp, results, result_pmc);
+            }
+            PUTBACK;
         }
 
-        /* Parrot bytecode location shouldn't move. */
-        return next;
+        /* Use the return helper to hand back the result. */
+        ns_key = pmc_new(interp, enum_class_ResizableStringArray);
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "parrot"));
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Perl5"));
+        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Compiler"));
+        ns = Parrot_get_namespace_keyed(interp, interp->root_namespace, ns_key);
+        return_helper = VTABLE_get_pmc_keyed_str(interp, ns, CONST_STRING(interp, "!return_value_helper_arr"));
+        return_helper = VTABLE_clone(interp, return_helper);
+        VTABLE_setprop(interp, return_helper, CONST_STRING(interp, "$!ret_val"), results);
+        return VTABLE_invoke(interp, return_helper, next);
     }
 }
