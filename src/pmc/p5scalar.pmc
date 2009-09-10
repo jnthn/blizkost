@@ -64,6 +64,28 @@ Mark GC-ables.
 
 /*
 
+=item C<void destroy()>
+
+Decrement reference count of held SV.
+
+=cut
+
+*/
+    VTABLE void destroy() {
+        if (PMC_data(SELF)) {
+            PMC             *p5i;
+            PerlInterpreter *my_perl;
+            struct sv       *sv;
+            GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+            GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+            GETATTR_P5Scalar_sv(interp, SELF, sv);
+            SvREFCNT_dec(sv);
+        }
+    }
+
+
+/*
+
 =item C<INTVAL get_bool()>
 
 Returns the boolean value of the SV.
