@@ -94,11 +94,14 @@ XXX TODO: Return value handling
         {
             /* Set up the stack and invoke the method. */
             dSP;
+            ENTER;
+            SAVETMPS;
             PUSHMARK(SP);
             XPUSHs(invocant);
             /* XXX: Params. */
             PUTBACK;
             num_returns = call_method(c_name, G_ARRAY);
+            SPAGAIN;
 
             /* Build the results PMC array. */
             results = pmc_new(interp, enum_class_ResizablePMCArray);
@@ -106,11 +109,14 @@ XXX TODO: Return value handling
                 struct sv *result_sv = POPs;
                 PMC *result_pmc = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
                 SETATTR_P5Scalar_p5i(interp, result_pmc, SELF);
-                SETATTR_P5Scalar_sv(interp, result_pmc, result_sv);
+                SETATTR_P5Scalar_sv(interp, result_pmc, SvREFCNT_inc(result_sv));
                 VTABLE_unshift_pmc(interp, results, result_pmc);
             }
             PUTBACK;
+            FREETMPS;
+            LEAVE;
         }
+        mem_sys_free(c_name);
 
         /* Use the return helper to hand back the result. */
         ns_key = pmc_new(interp, enum_class_ResizableStringArray);

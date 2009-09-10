@@ -162,4 +162,50 @@ the given name on the given Perl 5 Scalar invocant.
         
         return result;
     }
+
+/*
+
+=item C<INTVAL can(STRING *name)>
+
+Checks if a class can do a given method.
+
+=cut
+
+*/
+    VTABLE INTVAL can(STRING *name) {
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *invocant;
+        INTVAL           result;
+        char            *c_name;
+
+        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GETATTR_P5Scalar_sv(interp, SELF, invocant);
+        c_name = Parrot_str_to_cstring(interp, name);
+
+        /* If it's not blessed, the answer is "no" right off. */
+        if (!sv_isobject(invocant))
+            return 0;
+
+        /* Otherwise, try UNIVERSAL::isa. */
+        {
+            dSP;
+            ENTER;
+            SAVETMPS;
+            PUSHMARK(SP);
+            XPUSHs(invocant);
+            XPUSHs(sv_2mortal(newSVpv(c_name, strlen(c_name))));
+            PUTBACK;
+            call_pv("UNIVERSAL::can", G_SCALAR);
+            SPAGAIN;
+            result = POPi;
+            PUTBACK;
+            FREETMPS;
+            LEAVE;
+        }
+
+        mem_sys_free(c_name);
+        return result;
+    }
 }

@@ -170,7 +170,7 @@ Run the Perl 5 code.
         return_code = eval_pv(c_source, TRUE);
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
         SETATTR_P5Scalar_p5i(interp, result, SELF);
-        SETATTR_P5Scalar_sv(interp, result, return_code);
+        SETATTR_P5Scalar_sv(interp, result, SvREFCNT_inc(return_code));
 
         /* Look up return helper. */
         ns_key = pmc_new(interp, enum_class_ResizableStringArray);
