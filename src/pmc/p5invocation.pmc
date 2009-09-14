@@ -23,6 +23,8 @@ invocation model and calling conventions.
 #include "pmc_p5interpreter.h"
 #include "pmc_p5scalar.h"
 
+#include "parrot/oplib/ops.h"
+
 /*
 
 =item C<static void get_args(PARROT_INTERP, PMC **pos_args, PMC **named_args)>
