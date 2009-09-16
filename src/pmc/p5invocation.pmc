@@ -207,6 +207,18 @@ marshall_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
         char *c_str = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, arg));
         result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
     }
+    else if ( VTABLE_does(interp, arg, CONST_STRING(interp, "array"))) {
+        PMC *iter;
+        struct av *array = newAV();
+        iter = VTABLE_get_iter(interp, arg);
+        while (VTABLE_get_bool(interp, iter)) {
+             PMC *item = VTABLE_shift_pmc(interp, iter);
+             struct sv *marshalled = marshall_arg(interp, my_perl, item);
+             av_push( array, marshalled);
+        }
+        result = newRV_inc(array);
+
+    }
     else {
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "Sorry, we do not support marshalling most things to Perl 5 yet.");
@@ -315,7 +327,7 @@ XXX TODO: Return value handling
                 XPUSHs(sv_2mortal(newSVpv(c_arg_name, strlen(c_arg_name))));
                 XPUSHs(marshall_arg(interp, my_perl, arg_value));
             }
-            
+
             /* Invoke the methods. */
             PUTBACK;
             num_returns = call_method(c_name, G_ARRAY);

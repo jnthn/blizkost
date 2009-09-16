@@ -56,7 +56,7 @@ to the blizkost compiler.
     .param pmc adverbs      :slurpy :named
 
     # We maintain a persistent P5Interpreter per Parrot interpreter. Should
-    # be a reasonable stratergy, or at least we'll try it until somebody can
+    # be a reasonable strategy, or at least we'll try it until somebody can
     # say why it's wrong and give us a better one.
     .local pmc parrot_interp, p5i
     parrot_interp = getinterp
