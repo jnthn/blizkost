@@ -80,6 +80,8 @@ Decrement reference count of held SV.
             GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
             GETATTR_P5Scalar_sv(interp, SELF, sv);
             SvREFCNT_dec(sv);
+            mem_sys_free(PMC_data(SELF));
+            PMC_data(SELF) = NULL;
         }
     }
 
@@ -170,16 +172,18 @@ the given name on the given Perl 5 Scalar invocant.
 
 */
     VTABLE PMC *find_method(STRING *name) {
-        PMC       *result;
-        PMC       *p5i;
-        struct sv *invocant;
+        PMC             *result;
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *invocant;
 
         GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
         GETATTR_P5Scalar_sv(interp, SELF, invocant);
 
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Invocation")));
         SETATTR_P5Invocation_p5i(interp, result, p5i);
-        SETATTR_P5Invocation_invocant(interp, result, invocant);
+        SETATTR_P5Invocation_invocant_sv(interp, result, SvREFCNT_inc(invocant));
         SETATTR_P5Invocation_name(interp, result, name);
         
         return result;
@@ -210,7 +214,7 @@ Checks if a class can do a given method.
         if (!sv_isobject(invocant))
             return 0;
 
-        /* Otherwise, try UNIVERSAL::isa. */
+        /* Otherwise, try UNIVERSAL::can. */
         {
             dSP;
             ENTER;

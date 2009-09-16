@@ -128,7 +128,36 @@ Implements the HLLCompiler library loading interface.
 .sub 'load_library' :method
     .param pmc name
     .param pmc extra :named :slurpy
-    die 'Sorry, library loading from Perl 5 is not yet implemented.'
+
+    # Construct a use into some dummy package.
+    # XXX Add a number to make it unique per use.
+    .local string package_name, name_str
+    package_name = 'BLIZKOST::TEMP::IMPORT'
+    $S0 = concat 'package ', package_name
+    $S0 = concat ";\nuse "
+    name_str = join '::', name
+    $S0 = concat name_str
+    self.'eval'($S0)
+
+    # Make namespace wrapper PMC.
+    .local pmc ns_wrapper, p5i
+    $P0 = getinterp
+    p5i = getprop '$!p5i', $P0
+    ns_wrapper = new ['P5Namespace'], p5i
+    ns_wrapper = name_str
+
+    # Set up imports. XXX No import symbols yet, todo.
+    .local pmc imports
+    imports = new ['Hash']
+    $P0 = new ['Hash']
+    imports['DEFAULT'] = $P0
+
+    # Construct library info hash.
+    .local pmc result
+    result = new ['Hash']
+    result['namespace'] = ns_wrapper
+    result['symbols'] = imports
+    .return (result)
 .end
 
 =back
