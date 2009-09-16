@@ -22,6 +22,7 @@ invocation model and calling conventions.
 /* Plus need to know about the interpreter and scalar wrapper. */
 #include "pmc_p5interpreter.h"
 #include "pmc_p5scalar.h"
+#include "pmc_p5namespace.h"
 
 /*
 
@@ -216,7 +217,8 @@ marshall_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
 
 pmclass P5Invocation group blizkost_group dynpmc {
     ATTR PMC       *p5i;
-    ATTR struct sv *invocant;
+    ATTR struct sv *invocant_sv;
+    ATTR PMC       *invocant_ns;
     ATTR STRING    *name;
 
 /*
@@ -247,11 +249,22 @@ Mark GC-ables.
 */
     VTABLE void mark() {
         if (PMC_data(SELF)) {
-            PMC *p5i;
+            PMC    *p5i, *invocant_ns;
+            STRING *name;
             GETATTR_P5Invocation_p5i(interp, SELF, p5i);
+            GETATTR_P5Invocation_invocant_ns(interp, SELF, invocant_ns);
+            GETATTR_P5Invocation_name(interp, SELF, name);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
+            if (invocant_ns)
+                Parrot_gc_mark_PObj_alive(interp, (PObj*)invocant_ns);
+            if (name)
+                Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
         }
+    }
+
+    VTABLE void destroy() {
+        /* XXX TODO. */
     }
 
 /*
@@ -260,17 +273,14 @@ Mark GC-ables.
 
 Handles the actual invocation.
 
-XXX TODO: Also pass arguments along.
-
-XXX TODO: Return value handling
-
 =cut
 
 */
     VTABLE opcode_t *invoke(void *next) {
         STRING          *name;
         char            *c_name;
-        struct sv       *invocant;
+        struct sv       *invocant_sv;
+        PMC             *invocant_ns;
         int              num_returns, i;
         PMC             *p5i, *results, *ns, *ns_key, *return_helper;
         PMC             *pos_args, *named_args, *iter;
@@ -281,7 +291,8 @@ XXX TODO: Return value handling
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
         GETATTR_P5Invocation_name(interp, SELF, name);
         c_name = Parrot_str_to_cstring(interp, name);
-        GETATTR_P5Invocation_invocant(interp, SELF, invocant);
+        GETATTR_P5Invocation_invocant_sv(interp, SELF, invocant_sv);
+        GETATTR_P5Invocation_invocant_ns(interp, SELF, invocant_ns);
 
         /* Grab the parameters; toss the invocant as we already have
          * that. */
@@ -294,7 +305,14 @@ XXX TODO: Return value handling
             ENTER;
             SAVETMPS;
             PUSHMARK(SP);
-            XPUSHs(invocant);
+            if (invocant_sv) {
+                XPUSHs(sv_2mortal(SvREFCNT_inc(invocant_sv)));
+            }
+            else {
+                STRING *ns_name;
+                GETATTR_P5Namespace_ns_name(interp, invocant_ns, ns_name);
+                VTABLE_unshift_string(interp, pos_args, ns_name);
+            }
 
             /* Stick on positional arguments. */
             iter = VTABLE_get_iter(interp, pos_args);
