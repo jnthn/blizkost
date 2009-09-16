@@ -220,6 +220,19 @@ marshall_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
         result = newRV_inc(array);
 
     }
+    else if ( VTABLE_does(interp, arg, CONST_STRING(interp, "hash"))) {
+        PMC *iter = VTABLE_get_iter(interp, arg);
+        struct hv *hash = newHV();
+        INTVAL n = VTABLE_elements(interp, arg);
+        INTVAL i;
+        for(i = 0; i < n; i++) {
+            STRING *s = VTABLE_shift_string(interp, iter);
+            char *c_str = Parrot_str_to_cstring(interp, s);
+            struct sv *val = marshall_arg(interp, my_perl, VTABLE_get_pmc_keyed_str(interp, arg, s));
+            hv_store(hash, c_str, strlen(c_str), val, 0);
+        }
+        result = newRV_inc(hash);
+    }
     else {
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
                 "Sorry, we do not support marshalling most things to Perl 5 yet.");
