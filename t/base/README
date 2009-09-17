@@ -1,0 +1,5 @@
+
+This is the Perl 5 base test suite, which lives in t/base in the Perl 5 git repo as well.
+It is slightly tweaked here to remove shebang lines and TODO a few tests.
+
+Currently lex.t is disabled. If you can get that to work, you rock!
