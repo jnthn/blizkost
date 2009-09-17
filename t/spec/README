@@ -1,0 +1,5 @@
+This contains a subset of the official Perl 5 Test Suite, which is the closest thing
+we have for a spec to Perl 5.
+
+Please feel free to migrate tests from the Perl 5 git repo in here, keeping the same
+directory structure as the t/ directory in there.
