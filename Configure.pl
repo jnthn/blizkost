@@ -47,7 +47,8 @@ my @parrot_config_exe = $opt_parrot_config
 #  Get configuration information from parrot_config
 my %config = read_parrot_config(@parrot_config_exe);
 unless (%config) {
-    die "Unable to locate parrot_config.";
+    die "Unable to locate parrot_config\n"
+        ."Please give me the path to it with the --parrot-config=... option.";
 }
 
 #  Create the Makefile using the information we just got
