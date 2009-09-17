@@ -10,9 +10,14 @@ use 5.008;
 
 my $pbc = 'perl5.pbc';
 
+my @tests = (<t/*.t>,<t/*/*.t>, <t/spec/*/*.t>);
+
 our %harness_args = (
     language  => 'blizkost',
     verbosity => 0,
+    jobs      => $ENV{TEST_JOBS} || 1,
+    files     => \@tests,
+    merge     => 0,
 );
 
 GetOptions(
