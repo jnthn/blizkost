@@ -1,22 +1,35 @@
-print "1..2\n";
+print "1..3\n";
+my $t=1;
 
-eval { require Data::Dumper; };
+eval { require Test; };
 if ($@) {
-    print "not ok 1 # TODO use Data::Dumper : $@\n";
+    ok(0,"TODO require Test : $@");
 } else {
-    ok(1,'use Data::Dumper');
+    ok(1,'require Test');
 }
 
-eval { require Config; };
-if ($@) {
-    print "not ok 1 # TODO use Config : $@\n";
-} else {
-    ok(2,'use Config');
+{
+    eval { require Data::Dumper; };
+    if ($@) {
+        ok(0,"TODO require Data::Dumper : $@");
+    } else {
+        ok(1,'require Data::Dumper');
+    }
+}
+
+{
+    eval { require Config; };
+    if ($@) {
+        ok(0,"TODO require Config : $@");
+    } else {
+        ok(1,'require Config');
+    }
 }
 
 sub ok {
-    my ($num,$diag) = @_;
-    print "ok $num";
+    my ($truth,$diag) = @_;
+    print $truth ? "ok $t" : "not ok $t";
+    $t++;
 
     print $diag ? " # $diag\n" : "\n";
 }
