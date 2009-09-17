@@ -1,6 +1,4 @@
-# This just checks that the basic parsing and call to builtin say() works.
-say '1..4';
-say 'ok 1';
-say 'ok ', 2;
-say 'ok ', 2 + 1;
-say 'ok', ' ', 4;
+# This just checks that the basic parsing and call to builtin print() works
+print "1..2\n";
+print "ok 1\n";
+print "ok ". 2 . "\n";
