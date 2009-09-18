@@ -1,15 +1,9 @@
+#!perl6
 # I am not sure how to execute these tests from harness.
-# make test or parrot ./perl5.pir t/02-eval.t or ./blizkost t/02-eval.t
+# perl6 t/02-eval.t should work
 
+use v6;
 use Test;
-BEGIN {
-    eval { require v6 };
-    if ($@) {
-        print "1..1\n";
-        print "ok 1 # v6.pm not installed\n";
-        exit;
-    }
-}
 plan 5;
 
 ok 1 == eval( '1', :lang<perl5>), 'eval Integer';

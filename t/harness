@@ -12,6 +12,15 @@ my $pbc = 'perl5.pbc';
 
 my @tests = (<t/*.t>,<t/*/*.t>, <t/spec/*/*.t>);
 
+# Determine if perl6 is in our $PATH
+system("perl6 -e42");
+if ($? == -1 or ($? & 127)) {
+    @tests = grep { $_ !~ /perl6/ } @tests;
+    print "No working perl6 binary found in your path. Perl 6 tests disabled. :(\n";
+} else {
+    print "Found a working perl6 binary in your path. Perl 6 tests enabled. :)\n";
+}
+
 our %harness_args = (
     language  => 'blizkost',
     verbosity => 0,
