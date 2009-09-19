@@ -156,6 +156,7 @@ win32-inno-installer: installable
 #	pod2html --infile doc/running.pod --outfile man/html/parrot-blizkost.html
 	$(CP) installable_blizkost@exe@ parrot-blizkost.exe
 	$(PERL) -I$(LIB_DIR)/tools/lib $(LIB_DIR)/tools/dev/mk_inno_language.pl blizkost
+	$(PERL) -i.bak -pe "s|languages\\blizkost|languages\\perl5|" parrot-blizkost.iss
 	iscc parrot-blizkost.iss
 
 testclean:
