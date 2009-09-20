@@ -8,7 +8,7 @@ use warnings;
 use Getopt::Long;
 use 5.008;
 
-my $pbc = 'perl5.pbc';
+my $pbc = 'blizkost.pbc';
 
 my @tests = (<t/*.t>,<t/*/*.t>, <t/spec/*/*.t>);
 

@@ -13,9 +13,6 @@ LOAD_EXT      := @load_ext@
 O             := @o@
 
 # Various paths
-PERL6GRAMMAR  := $(LIB_DIR)/library/PGE/Perl6Grammar.pbc
-NQP           := $(LIB_DIR)/languages/nqp/nqp.pbc
-PCT           := $(LIB_DIR)/library/PCT.pbc
 PMC_DIR       := src/pmc
 
 ## Setup some commands
@@ -46,19 +43,17 @@ PMC_DEPS := \
   $(PMC_DIR)/p5scalar.pmc \
   $(PMC_DIR)/p5sub.pmc
 
-SOURCES := \
-  perl5.pir
-
 DOCS := README
 
 BUILD_CLEANUPS := \
-  perl5.pbc \
-  "src/gen_*.pir" \
+  perl5/perl5.pbc \
+  blizkost.pbc \
   "*.c" \
   "*$(O)" \
   blizkost@exe@ \
 #IF(win32):  parrot-blizkost.exe \
 #IF(win32):  parrot-blizkost.iss \
+#IF(win32):  *.bak \
 #IF(win32):  "setup-parrot-*.exe" \
   installable_blizkost@exe@
 
@@ -67,34 +62,28 @@ TEST_CLEANUPS :=
 # the default target
 build: \
   $(BLIZKOST_GROUP) \
-  perl5.pbc
+  perl5/perl5.pbc \
+  blizkost.pbc
 
 all: build blizkost@exe@ installable
 
-perl5.pbc: $(SOURCES)
-	$(PARROT) $(PARROT_ARGS) -o perl5.pbc perl5.pir
+perl5/perl5.pbc: src/perl5.pir
+	$(PARROT) $(PARROT_ARGS) -o perl5/perl5.pbc src/perl5.pir
 
-blizkost@exe@: perl5.pbc
-	$(PBC_TO_EXE) perl5.pbc
-	$(CP) perl5@exe@ blizkost@exe@
-	$(RM_F) perl5@exe@
-	$(CHMOD) 0775 blizkost@exe@
+blizkost.pbc: blizkost.pir
+	$(PARROT) $(PARROT_ARGS) -o blizkost.pbc blizkost.pir
+
+blizkost@exe@: blizkost.pbc
+	$(PBC_TO_EXE) blizkost.pbc
 #IF(win32):	copy $(BIN_DIR)\libparrot.dll .
 
 $(BLIZKOST_GROUP): $(PMC_DEPS)
 	$(MAKE) $(PMC_DIR)
 
-
-src/gen_builtins.pir: build/gen_builtins_pir.pl
-	$(PERL) build/gen_builtins_pir.pl $(BUILTINS_PIR) > src/gen_builtins.pir
-
 installable: installable_blizkost@exe@
 
-installable_blizkost@exe@: perl5.pbc
-	$(PBC_TO_EXE) perl5.pbc --install
-	$(CP) installable_perl5@exe@ installable_blizkost@exe@
-	$(RM_F) installable_perl5@exe@
-	$(CHMOD) 0775 installable_blizkost@exe@
+installable_blizkost@exe@: blizkost.pbc
+	$(PBC_TO_EXE) blizkost.pbc --install
 
 Makefile: build/Makefile.in
 	$(PERL) Configure.pl
@@ -137,7 +126,7 @@ install: installable
 	$(CP) installable_blizkost@exe@ $(BIN_DIR)/parrot-blizkost@exe@
 	$(CHMOD) 0755 $(BIN_DIR)/parrot-blizkost@exe@
 	-$(MKPATH) $(LIB_DIR)/languages/perl5
-	$(CP) perl5.pbc $(LIB_DIR)/languages/perl5/perl5.pbc
+	$(CP) perl5/perl5.pbc $(LIB_DIR)/languages/perl5/perl5.pbc
 	-$(MKPATH) $(MANDIR)/man1
 	-$(MKPATH) $(DOC_DIR)/languages/perl5
 	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
@@ -155,9 +144,9 @@ win32-inno-installer: installable
 #	-$(MKPATH) man/html
 #	pod2html --infile doc/running.pod --outfile man/html/parrot-blizkost.html
 	$(CP) installable_blizkost@exe@ parrot-blizkost.exe
-	$(PERL) -I$(LIB_DIR)/tools/lib $(LIB_DIR)/tools/dev/mk_inno_language.pl blizkost
-	$(PERL) -i.bak -pe "s|languages\\blizkost|languages\\perl5|" parrot-blizkost.iss
-	iscc parrot-blizkost.iss
+	$(PERL) -I$(LIB_DIR)/tools/lib $(LIB_DIR)/tools/dev/mk_inno_language.pl perl5
+	$(PERL) -i.bak -pe "s|\-perl5|-blizkost|; s|\-Perl5|-Blizkost|;" parrot-perl5.iss
+	iscc parrot-perl5.iss
 
 testclean:
 	$(RM_F) $(TEST_CLEANUPS)

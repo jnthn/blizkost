@@ -32,21 +32,6 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
 .end
 
 
-=item main(args :slurpy)  :main
-
-Start compilation by passing any command line C<args>
-to the blizkost compiler.
-
-=cut
-
-.sub 'main' :main
-    .param pmc args
-
-    $P0 = compreg 'perl5'
-    $P1 = $P0.'command_line'(args)
-.end
-
-
 =item make_interp()
 
 =cut
@@ -80,7 +65,7 @@ to the blizkost compiler.
     .param pmc code
     .param pmc args            :slurpy
     .param pmc adverbs         :slurpy :named
-    
+
     $P0 = self.'compile'(code, adverbs :flat :named)
     ($P1 :slurpy, $P2 :slurpy :named)  = $P0()
     .return ($P1 :flat, $P2 :flat :named)
