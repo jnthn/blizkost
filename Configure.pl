@@ -97,6 +97,9 @@ sub create_makefiles {
     );
     my $build_tool = $config{libdir} . $config{versiondir}
                    . '/tools/dev/gen_makefile.pl';
+
+    die "Build tool $build_tool not found\nThis usually means that you need to do a 'make install-dev' in your parrot source code directory." unless -e $build_tool;
+
 print "$build_tool\n";
     foreach my $template (keys %makefiles) {
         my $makefile = $makefiles{$template};
