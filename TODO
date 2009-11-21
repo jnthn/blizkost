@@ -1,0 +1,27 @@
+
+=head1 Loading XS from Perl 5 in Blizkost
+
+I got this error when trying to load and XS module from Blizkost:
+
+Can't load '/usr/lib/perl/5.10/auto/Data/Dumper/Dumper.so' for module Data::Dumper: /usr/lib/perl/5.10/auto/Data/Dumper/Dumper.so: undefined symbol: Perl_sv_cmp at /usr/lib/perl/5.10/XSLoader.pm line 64.
+ at /usr/lib/perl/5.10/Data/Dumper.pm line 36
+
+This could have been a configuration issue on my part. We need tests for these things, and if it is broken, it needs to be fixed. We have to have loading XS from Perl 5 working before using XS-loaded Perl 5 from Perl 6 can work.
+
+
+from #perl6 on 21. November 2009:
+
+    21:07:03 <@TimToady> I thought it had a real p5 interpreter inside it
+    21:07:25 <@TimToady> if so, it oughta be able to do XS
+    21:13:13 < dukeleto> TimToady: patches welcome! this is what happened last time I tried loading XS :
+                            http://leto.net/dukeleto.pl/2009/09/blizkost-is-passing-102-tests.html
+    21:15:39 < dukeleto> TimToady: i should try again, a lot of work has gone into blizkost since then
+    21:15:56 <@TimToady> I would guess that it's probably just some configuration issue, unless blizkost is using miniperl
+    21:16:43 <@TimToady> but a real embedded Perl 5 ought to be able to load XS fairly easily
+    21:17:05 < dukeleto> TimToady: i don't think we use miniperl. it is a proper embedded perl 5 interp
+    21:17:53 < dukeleto> TimToady: for what definition of "fairly easily" ? does some marshalling code need to be written?
+    21:20:34  * dukeleto attempts to get blizkost working on a recent parrot
+    21:21:17 <@TimToady> fairly easily meaning that P5 code can see the XS modules, not that P6 necessarily can
+    21:22:25 < dukeleto> TimToady: yes, we can't even seem to get P5 code to see XS modules in blizkost yet. 
+    21:24:24 <@TimToady> print out the embedded %ENV and see if parrot is interfering with it
+
