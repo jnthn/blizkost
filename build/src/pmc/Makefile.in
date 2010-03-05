@@ -1,49 +1,49 @@
 ## $Id$
 
 # values from parrot_config
-VERSION_DIR   := @versiondir@
-INCLUDE_DIR   := @includedir@$(VERSION_DIR)
-LIB_DIR       := @libdir@$(VERSION_DIR)
-SRC_DIR       := @srcdir@$(VERSION_DIR)
-TOOLS_DIR     := @libdir@$(VERSION_DIR)/tools/lib
-STAGING_DIR   := ../../dynext
-#INSTALL_DIR   := $(LIB_DIR)/languages/blizkost/dynext
-INSTALL_DIR   := $(LIB_DIR)/dynext
+VERSION_DIR   = @versiondir@
+INCLUDE_DIR   = @includedir@$(VERSION_DIR)
+LIB_DIR       = @libdir@$(VERSION_DIR)
+SRC_DIR       = @srcdir@$(VERSION_DIR)
+TOOLS_DIR     = @libdir@$(VERSION_DIR)/tools/lib
+STAGING_DIR   = ../../dynext
+#INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
+INSTALL_DIR   = $(LIB_DIR)/dynext
 
 # Set up extensions
-LOAD_EXT      := @load_ext@
-O             := @o@
+LOAD_EXT      = @load_ext@
+O             = @o@
 
 # Setup some commands
-PERL          := @perl@
-RM_F          := @rm_f@
-MKPATH        := @mkpath@
-CHMOD         := @chmod@
-CP            := @cp@
-CC            := @cc@ -c
-LD            := @ld@
-LDFLAGS       := @ldflags@ @ld_debug@ @libs@
-LD_LOAD_FLAGS := @ld_load_flags@
-CFLAGS        := @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ -I"$(P5_ARCHLIB)/CORE"
-CC_OUT        := @cc_o_out@
-LD_OUT        := @ld_out@
-LIBPARROT     := @inst_libparrot_ldflags@
+PERL          = @perl@
+RM_F          = @rm_f@
+MKPATH        = @mkpath@
+CHMOD         = @chmod@
+CP            = @cp@
+CC            = @cc@ -c
+LD            = @ld@
+LDFLAGS       = @ldflags@ @ld_debug@ @libs@
+LD_LOAD_FLAGS = @ld_load_flags@
+CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ -I"$(P5_ARCHLIB)/CORE"
+CC_OUT        = @cc_o_out@
+LD_OUT        = @ld_out@
+LIBPARROT     = @inst_libparrot_ldflags@
 
-LIBPERL   := -lperl
-#IF(darwin):LIBPERL := $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
-#IF(win32):LIBPERL  := $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
+LIBPERL   = -lperl
+#IF(darwin):LIBPERL = $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
+#IF(win32):LIBPERL  = $(P5_ARCHLIB)/CORE/$(P5_LIBPERL)
 
-PMC2C_INCLUDES  := --include $(SRC_DIR) --include $(SRC_DIR)/pmc
-PMC2C           := $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
-PMC2CD          := $(PMC2C) --dump $(PMC2C_INCLUDES)
-PMC2CC          := $(PMC2C) --c $(PMC2C_INCLUDES)
+PMC2C_INCLUDES  = --include $(SRC_DIR) --include $(SRC_DIR)/pmc
+PMC2C           = $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
+PMC2CD          = $(PMC2C) --dump $(PMC2C_INCLUDES)
+PMC2CC          = $(PMC2C) --c $(PMC2C_INCLUDES)
 
-INCLUDES        := -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
-LINKARGS        := $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
+INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
+LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
 
-BLIZKOST_GROUP := blizkost_group
+BLIZKOST_GROUP = blizkost_group
 
-PMC_SOURCES := \
+PMC_SOURCES = \
   p5interpreter.pmc \
   p5scalar.pmc \
   p5array.pmc  \
@@ -52,9 +52,9 @@ PMC_SOURCES := \
   p5namespace.pmc \
   p5invocation.pmc
 
-PMC_C := $(PMC_SOURCES:.pmc=.c)
+PMC_C = $(PMC_SOURCES:.pmc=.c)
 
-OBJS := \
+OBJS = \
   lib-$(BLIZKOST_GROUP)$(O) \
   p5scalar$(O) \
   p5array$(O) \
@@ -64,7 +64,7 @@ OBJS := \
   p5interpreter$(O) \
   p5invocation$(O)
 
-CLEANUPS := \
+CLEANUPS = \
   "*$(LOAD_EXT)" \
   "*$(O)" \
   "*.c" \

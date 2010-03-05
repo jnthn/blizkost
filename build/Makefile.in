@@ -1,42 +1,42 @@
 ## arguments we want to run parrot with
-PARROT_ARGS   :=
+PARROT_ARGS   =
 
 ## configuration settings
-VERSION       := @versiondir@
-BIN_DIR       := @bindir@
-LIB_DIR       := @libdir@$(VERSION)
-DOC_DIR       := @docdir@$(VERSION)
-MANDIR        := @mandir@$(VERSION)
+VERSION       = @versiondir@
+BIN_DIR       = @bindir@
+LIB_DIR       = @libdir@$(VERSION)
+DOC_DIR       = @docdir@$(VERSION)
+MANDIR        = @mandir@$(VERSION)
 
 # Set up extensions
-LOAD_EXT      := @load_ext@
-O             := @o@
+LOAD_EXT      = @load_ext@
+O             = @o@
 
 # Various paths
-PERL6GRAMMAR  := $(LIB_DIR)/library/PGE/Perl6Grammar.pbc
-NQP           := $(LIB_DIR)/languages/nqp/nqp.pbc
-PCT           := $(LIB_DIR)/library/PCT.pbc
-PMC_DIR       := src/pmc
+PERL6GRAMMAR  = $(LIB_DIR)/library/PGE/Perl6Grammar.pbc
+NQP           = $(LIB_DIR)/languages/nqp/nqp.pbc
+PCT           = $(LIB_DIR)/library/PCT.pbc
+PMC_DIR       = src/pmc
 
 ## Setup some commands
-MAKE          := @make_c@
-PERL          := @perl@
-CAT           := @cat@
-CHMOD         := @chmod@
-CP            := @cp@
-MKPATH        := @mkpath@
-RM_F          := @rm_f@
-RM_RF         := @rm_rf@
-POD2MAN       := pod2man
-PARROT        := $(BIN_DIR)/parrot@exe@
-PBC_TO_EXE    := $(BIN_DIR)/pbc_to_exe@exe@
+MAKE          = @make_c@
+PERL          = @perl@
+CAT           = @cat@
+CHMOD         = @chmod@
+CP            = @cp@
+MKPATH        = @mkpath@
+RM_F          = @rm_f@
+RM_RF         = @rm_rf@
+POD2MAN       = pod2man
+PARROT        = $(BIN_DIR)/parrot@exe@
+PBC_TO_EXE    = $(BIN_DIR)/pbc_to_exe@exe@
 #IF(darwin):
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
-#IF(darwin):export MACOSX_DEPLOYMENT_TARGET := @osx_version@
+#IF(darwin):export MACOSX_DEPLOYMENT_TARGET = @osx_version@
 
-BLIZKOST_GROUP := $(PMC_DIR)/blizkost_group$(LOAD_EXT)
+BLIZKOST_GROUP = $(PMC_DIR)/blizkost_group$(LOAD_EXT)
 
-PMC_DEPS := \
+PMC_DEPS = \
   build/src/pmc/Makefile.in \
   $(PMC_DIR)/p5array.pmc \
   $(PMC_DIR)/p5hash.pmc \
@@ -45,12 +45,12 @@ PMC_DEPS := \
   $(PMC_DIR)/p5scalar.pmc \
   $(PMC_DIR)/p5sub.pmc
 
-SOURCES := \
+SOURCES = \
   perl5.pir
 
-DOCS := README
+DOCS = README
 
-BUILD_CLEANUPS := \
+BUILD_CLEANUPS = \
   perl5.pbc \
   "src/gen_*.pir" \
   "*.c" \
@@ -61,7 +61,7 @@ BUILD_CLEANUPS := \
 #IF(win32):  "setup-parrot-*.exe" \
   installable_blizkost@exe@
 
-TEST_CLEANUPS :=
+TEST_CLEANUPS =
 
 # the default target
 build: \
