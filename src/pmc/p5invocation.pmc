@@ -16,6 +16,10 @@ invocation model and calling conventions.
 */
 
 /* Various Perl 5 headers that we need. */
+#undef __attribute__
+#undef __attribute__noreturn__
+#undef __attribute__deprecated__
+#define __attribute__(x) /* */
 #include <EXTERN.h>
 #include <perl.h>
 

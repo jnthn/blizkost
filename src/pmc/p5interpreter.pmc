@@ -14,6 +14,10 @@ These are the vtable functions for the P5Interpreter class.
 */
 
 /* Various Perl 5 headers plus XS initialization. */
+#undef __attribute__
+#undef __attribute__noreturn__
+#undef __attribute__deprecated__
+#define __attribute__(x) /* */
 #include "init_with_xs.h"
 
 /* Need to know a bit about other PMCs. */
