@@ -27,155 +27,7 @@ invocation model and calling conventions.
 #include "pmc_p5interpreter.h"
 #include "pmc_p5scalar.h"
 #include "pmc_p5namespace.h"
-
 #include "parrot/oplib/ops.h"
-
-/*
-
-=item C<static void get_args(PARROT_INTERP, PMC **pos_args, PMC **named_args)>
-
-Gets a list of the arguments that are being passed, taking them from the
-registers and the constants table and flattening any :flat arguments as
-required. Hands back a ResizablePMCArray of the positional parameters and
-a Hash of the named parameters.
-
-=cut
-
-*/
-
-PARROT_WARN_UNUSED_RESULT
-PARROT_CANNOT_RETURN_NULL
-static void
-get_args(PARROT_INTERP, PMC **pos_args, PMC **named_args)
-{
-    INTVAL sig_len, i;
-    PMC    *arg;
-    PMC    *sig;
-    STRING *name      = NULL;
-
-    /* Initialize results list. */
-    PMC    * const arg_list       = pmc_new(interp, enum_class_ResizablePMCArray);
-    PMC    * const arg_hash       = pmc_new(interp, enum_class_Hash);
-
-    /* Get constants table for current segment, so we can look up sig and any
-     * constant arguments. */
-    PackFile_Constant **constants = interp->code->const_table->constants;
-
-    /* Make sure we have a place to source the current arguments from. */
-    const opcode_t *args_op = interp->current_args;
-    if (!args_op)
-        Parrot_ex_throw_from_c_args(interp, NULL, 1,
-            "No arguments found to dispatch on");
-    PARROT_ASSERT(*args_op == PARROT_OP_set_args_pc);
-
-    /* Get the (Parrot calling conventions) signature PMC. */
-    ++args_op;
-    sig = constants[*args_op]->u.key;
-    ASSERT_SIG_PMC(sig);
-    sig_len = VTABLE_elements(interp, sig);
-
-    /* Set PMC arguments. */
-    *pos_args   = arg_list;
-    *named_args = arg_hash;
-
-    /* If we have a zero-length signature, we're done. */
-    if (sig_len == 0)
-        return;
-
-    /* Otherwise, we have arguments. Note that first is the invocant so we
-     * will skip over it and not pass it - we already store that. */
-    ++args_op;
-    for (i = 0; i < sig_len; ++i, ++args_op) {
-        const INTVAL type = VTABLE_get_integer_keyed_int(interp, sig, i);
-        const int idx     = *args_op;
-
-        /* If we find a named argument, grab its name; the next thing will
-         * be the value. */
-        if ((type & PARROT_ARG_NAME) && !(type & PARROT_ARG_FLATTEN)) {
-            name = constants[idx]->u.string;
-            continue;
-        }
-
-        /* Put the argument in the list. For some arguments, we must box them into
-         * a PMC to be able to have them in the list. XXX Use Perl 6 box types. */
-        switch (type & (PARROT_ARG_TYPE_MASK | PARROT_ARG_FLATTEN | PARROT_ARG_NAME)) {
-            case PARROT_ARG_INTVAL:
-                /* Integer constants always in register. */
-                arg = pmc_new(interp, enum_class_Integer);
-                VTABLE_set_integer_native(interp, arg, REG_INT(interp, idx));
-                if (name)
-                    VTABLE_set_pmc_keyed_str(interp, arg_hash, name, arg);
-                else
-                    VTABLE_push_pmc(interp, arg_list, arg);
-                break;
-            case PARROT_ARG_FLOATVAL:
-                /* May have value in an N register or constants table. */
-                arg = pmc_new(interp, enum_class_Float);
-                if ((type & PARROT_ARG_CONSTANT))
-                    VTABLE_set_number_native(interp, arg, constants[idx]->u.number);
-                else
-                    VTABLE_set_number_native(interp, arg, REG_NUM(interp, idx));
-                if (name)
-                    VTABLE_set_pmc_keyed_str(interp, arg_hash, name, arg);
-                else
-                    VTABLE_push_pmc(interp, arg_list, arg);
-                break;
-            case PARROT_ARG_STRING:
-                /* May have value in an S register or constnats table. */
-                arg = pmc_new(interp, enum_class_String);
-                if ((type & PARROT_ARG_CONSTANT))
-                    VTABLE_set_string_native(interp, arg, constants[idx]->u.string);
-                else
-                    VTABLE_set_string_native(interp, arg, REG_STR(interp, idx));
-                if (name)
-                    VTABLE_set_pmc_keyed_str(interp, arg_hash, name, arg);
-                else
-                    VTABLE_push_pmc(interp, arg_list, arg);
-                break;
-            case PARROT_ARG_PMC:
-                /* May have value in a P register or constants table. */
-                if ((type & PARROT_ARG_CONSTANT))
-                    arg = constants[idx]->u.key;
-                else
-                    arg = REG_PMC(interp, idx);
-                if (name)
-                    VTABLE_set_pmc_keyed_str(interp, arg_hash, name, arg);
-                else
-                    VTABLE_push_pmc(interp, arg_list, arg);
-                break;
-            case PARROT_ARG_FLATTEN | PARROT_ARG_PMC: {
-                /* Expand flattening arguments; just loop over the array that
-                 * is being flattened and get all of the entries within it. */
-                int j, n;
-                const int idx = *args_op;
-                arg           = REG_PMC(interp, idx);
-                n             = VTABLE_elements(interp, arg);
-                for (j = 0; j < n; ++j)
-                    VTABLE_push_pmc(interp, arg_list,
-                        VTABLE_get_pmc_keyed_int(interp, arg, j));
-                break;
-            }
-            case PARROT_ARG_FLATTEN | PARROT_ARG_PMC | PARROT_ARG_NAME: {
-                /* Expand flattening arguments; iterate over the hash. */
-                const int idx = *args_op;
-                PMC *it;
-                arg           = REG_PMC(interp, idx);
-                it            = VTABLE_get_iter(interp, arg);
-                while (VTABLE_get_bool(interp, it)) {
-                    name = VTABLE_shift_string(interp, it);
-                    VTABLE_set_pmc_keyed_str(interp, arg_hash, name,
-                            VTABLE_get_pmc_keyed_str(interp, arg, name));
-                }
-                break;
-            }
-            default:
-                Parrot_ex_throw_from_c_args(interp, NULL, 1,
-                        "Unknown signature type %d in Parrot_P5Invocation_get_args", type);
-                break;
-        }
-    }
-}
-
 
 /*
 
@@ -314,7 +166,7 @@ Handles the actual invocation.
         PMC             *invocant_ns;
         int              num_returns, i;
         PMC             *p5i, *results, *ns, *ns_key, *return_helper;
-        PMC             *pos_args, *named_args, *iter;
+        PMC             *capture, *named_names, *named_args, *iter;
         PerlInterpreter *my_perl;
         
         /* Get the interpreter, SV and the name. */
@@ -325,10 +177,19 @@ Handles the actual invocation.
         GETATTR_P5Invocation_invocant_sv(interp, SELF, invocant_sv);
         GETATTR_P5Invocation_invocant_ns(interp, SELF, invocant_ns);
 
-        /* Grab the parameters; toss the invocant as we already have
-         * that. */
-        get_args(interp, &pos_args, &named_args);
-        VTABLE_shift_pmc(interp, pos_args);
+        /* Grab the parameters; toss the invocant as we already have that. */
+        capture     = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
+        named_names = VTABLE_get_attr_str(interp, capture, string_from_literal(interp, "named"));
+        named_args  = Parrot_pmc_new(interp, enum_class_Hash);
+        if (!PMC_IS_NULL(named_names)) {
+            PMC *iter = VTABLE_get_iter(interp, named_names);
+            while (VTABLE_get_bool(interp, iter)) {
+                STRING *name = VTABLE_shift_string(interp, iter);
+                PMC *value = VTABLE_get_pmc_keyed_str(interp, capture, name);
+                VTABLE_set_pmc_keyed(interp, named_args, name, value);
+            }
+        }
+        VTABLE_shift_pmc(interp, capture);
 
         {
             /* Set up the stack. */
@@ -342,11 +203,11 @@ Handles the actual invocation.
             else {
                 STRING *ns_name;
                 GETATTR_P5Namespace_ns_name(interp, invocant_ns, ns_name);
-                VTABLE_unshift_string(interp, pos_args, ns_name);
+                VTABLE_unshift_string(interp, capture, ns_name);
             }
 
             /* Stick on positional arguments. */
-            iter = VTABLE_get_iter(interp, pos_args);
+            iter = VTABLE_get_iter(interp, capture);
             while (VTABLE_get_bool(interp, iter)) {
                 PMC *pos_arg = VTABLE_shift_pmc(interp, iter);
                 XPUSHs(marshall_arg(interp, my_perl, pos_arg));
