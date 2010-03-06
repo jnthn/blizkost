@@ -63,7 +63,7 @@ Set up P5Interpreter PMC.
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Interpreter_attributes);
         PObj_custom_mark_SET(SELF);
-        PObj_active_destroy_SET(SELF);
+        PObj_custom_destroy_SET(SELF);
 
         /* Inited before? */
         if (!inited) {

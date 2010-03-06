@@ -46,7 +46,7 @@ Set up P5Namespace PMC.
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Namespace_attributes);
         PObj_custom_mark_SET(SELF);
-        PObj_active_destroy_SET(SELF);
+        PObj_custom_destroy_SET(SELF);
         SETATTR_P5Namespace_p5i(interp, SELF, p5i);
         SETATTR_P5Namespace_marshall_cache(interp, SELF, PMCNULL);
     }
