@@ -164,7 +164,7 @@ Handles the actual invocation.
         char            *c_name;
         struct sv       *invocant_sv;
         PMC             *invocant_ns;
-        int              num_returns, i;
+        int              num_returns, num_pos, i;
         PMC             *p5i, *results, *ns, *ns_key, *return_helper;
         PMC             *capture, *named_names, *named_args, *iter;
         PerlInterpreter *my_perl;
@@ -207,9 +207,10 @@ Handles the actual invocation.
             }
 
             /* Stick on positional arguments. */
-            iter = VTABLE_get_iter(interp, capture);
-            while (VTABLE_get_bool(interp, iter)) {
-                PMC *pos_arg = VTABLE_shift_pmc(interp, iter);
+            i = 0;
+            num_pos = VTABLE_elements(interp, capture);
+            for (i = 0; i < num_pos; i++) {
+                PMC *pos_arg = VTABLE_get_pmc_keyed_int(interp, capture, i);
                 XPUSHs(marshall_arg(interp, my_perl, pos_arg));
             }
 
