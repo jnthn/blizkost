@@ -1,0 +1,186 @@
+=head1 INTRO
+
+Blizkost Perl5 <-> Parrot interoperability semantics
+
+The idea here is that migrating data between the Perl5 dataspace and the Parrot
+dataspace is essentially the same problem as Parrot to C, and we need the same
+technology - a FFI.
+
+=head1 PERL 5 FROM A PARROT PERSPECTIVE
+
+The fundamental object in Perl 5 is the B<SV>.  A SV is a I<polymorphic
+container>; it can hold a string, a floating point number, an integer, a
+reference to another SV, a subroutine (not by reference), an array (not by
+reference), a hash (not by reference), a file handle, a format (you don't want
+to know), a symbol table entry (essentially a specialized hash mapping sigils
+to SVs), or nothing at all.  These are not mutually exclusive.
+
+SVs have several behavioral restrictions.  Most importantly, a SV which holds
+an aggregate, cannot have ever held a different kind of data, and cannot change
+to hold a different kind of data.  However, non-aggreggate containers can
+change value type freely.
+
+SVs can also I<have magic>, which is kindof like traits, but more restricted.
+SVs can be tied, which is like magic, except when it's not.
+
+SVs are not garbage collected, instead they are I<reference counted>.
+
+Perl extensions extensively rely on these behavioral quirks of SVs, as does the
+core, except the core also depends on representation.  I hold this responsible
+for the death of ponie.
+
+=head1 MAPPERS AND HANDLES
+
+Blizkost relies on a number of B<mappers>.  A mapper is something that knows
+how to take a PMC and make it look like an SV, or vice versa.  Mappers fall
+into four groups, designated B<scalar export> (turns one PMC into one SV),
+B<scalar import> (the reverse), B<list export> (turn a few PMCs into a few
+SVs), and B<list import>.
+
+Mappers are I<simply Parrot C<Callable>s> which operate on PMCs and SV handles,
+so you can define your own if you want interesting semantics.  See
+L</THE REGISTRY> below.
+
+In order to implement the mappers, it is necessary to write code (in one or
+both universes) which can handle objects in the opposite world.  For this
+Blizkost provides B<handles> - two classes, C<perl5;Blizkost;PMC> and
+C<parrot;Blizkost;SV> .  These classes do I<no semantic translation>; they
+simply present an object-oriented interface to data objects in the other world,
+while mediating garbage collection.
+
+=head1 PREDEFINED MAPPERS
+
+Several simple mappers are provided for you; most of them only operate on a
+single type, so are only useful in the context of a user-defined mapper.  All
+mappers are exported from C<parrot;Blizkost;Mappers>.
+
+All mappers which copy values will set the copies to be read-only to catch
+common aliasing errors.
+
+Many of these functions are overloaded to handle both directions.  This means
+that you don't have to remember confusing arcane terminology like "exporter".
+
+All of them will generate Parrot exceptions on range check error.
+
+=head2 intvalue
+
+This I<scalar importer> will coerce the SV to an integer, and return a new PMC
+containing a copy of the value.
+
+This I<scalar exporter> will call get_integer on a PMC, and return a new SV
+containing the integer value.
+
+=head2 numvalue
+
+Same as intvalue, except for floating point.
+
+=head2 strvalue
+
+Same as intvalue, but for strings.  Note that in Perl, string values are
+logically immutable (although there are in-place optimizations for the case
+where a string in memory is only held in one container).
+
+=head2 scalarvalue
+
+Combines intvalue, strvalue, and numvalue, and additionally will handle
+"dualvar" objects such as Perl 5's C<$!> that have independant string and
+number identities.
+
+=head2 deeparray(CHILD)
+
+Duplicates the immediate structure of the referent of a hash reference, or
+object, using a child mapper to handle subobjects.  Uses the array interface on
+whatever it is copying.
+
+=head2 deephash(CHILD)
+
+Same as deeparray, but using string keys.
+
+=head2 proxyscalar
+
+Creates a general scalar container, which is magically bound to the source
+object, such that any changes in the destination are reflected to the source.
+The Perl-side scalar cannot hold references.
+
+=head2 proxyarray(CHILD)
+
+Creates a positional aggregate bound to the source object, using the CHILD to
+handle importing and exporting children.
+
+=head2 proxyhash(CHILD[, KEYCHILD])
+
+Creates a keyed aggregate.  KEYCHILD is used for SV-keyed tied hashes; if you
+have one of these, you know.  If it is not provided, the string interface will
+be used.
+
+=head2 asref(CHILD)
+
+When importing, automatically dereferences Perl-side references.  When
+exporting, creates a new Perl-side reference to a value.  You need this if you
+want to put aggregates into other aggregates or a parameter list.
+
+=head2 vectorize(CHILD)
+
+Turns a scalar importer/exporter into a list version which treats arguments
+homogenously.
+
+=head2 wrapper(ARGS, RESULTS)
+
+Imports and exports subroutine values by creating a wrapper sub on the other
+side.  Needs child I<list> mappers to handle boundary conversion.
+
+=head2 objproxy(DEFARGS, DEFRES, {METHOD => [ARGS, RES]})
+
+Creates an opaque proxy object, which relays only methods.  If some methods
+need special treatment, they can be named.
+
+=head2 default
+
+This one combines wrapper, objproxy, deeparray, deephash, scalarvalue, and
+asref in the most obvious way, attempting to do the Right Thing with all
+values passed to it.
+
+=head1 EXCEPTIONS
+
+Attempting to use a Parrot continuation to exit the dynamic scope of a Perl 5
+call won't do what you expect, unless you know how it's implemented, so don't
+do that.
+
+For actual exceptions, things are a bit easier.  First, Perl 5 does not support
+non-fatal exceptions or resuming handlers.  If you throw a non-fatal exception
+in Parrot code, it will be treated as unhandled and dropped on the floor after
+it hits Perl 5.  Fatal exceptions will propagate into Perl 5 and unwind the
+Perl stack; when this happens, the resume continuation will be erased, as it
+is not possible to un-unwind the Perl 5 activation stack.
+
+Exceptions generated from Parrot are represented by a
+C<perl5;Blizkost;ParrotException> object while in Perl.  Exceptions generated
+from Perl 5 are represented by a C<parrot;Blizkost;Perl5Exception> object while
+in Parrot.
+
+=head1 THE REGISTRY
+
+When a value is imported from Perl 5 into Parrot, Blizkost consults an internal
+table mapping symbol names to mapper functions called the B<registry>.  This
+allows imports to I<just work>, even when C<default> doesn't do the right
+thing.  An initial set of mappings is shipped with Blizkost (which is expected
+to grow over time); if your favorite module is not listed, please submit a
+patch, and use the hooks in C<parrot;Blizkost;Registry> in the mean time.
+
+=head1 THE OTHER WAY
+
+Blizkost provides a Perl 5 library which can be used to instantiate a Parrot
+interpreter if needed and access Parrot modules.  In general this is a bit
+easier than the forward direction, as Parrot subs carry more metadata and
+Parrot values are less overloaded; you should very rarely need to write custom
+marshalling code.
+
+A C<parrot> pragmatic module is provided to enable cross-language import.
+
+    use parrot java => java.util.zip.ZipInputStream;
+
+    ZipInputStream->new(...)
+
+=cut
+
+vim: ft=pod
