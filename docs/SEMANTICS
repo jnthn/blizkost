@@ -48,6 +48,11 @@ C<parrot;Blizkost;SV> .  These classes do I<no semantic translation>; they
 simply present an object-oriented interface to data objects in the other world,
 while mediating garbage collection.
 
+If a mapper is called with no arguments (or some kind of void argument,
+maybe?), it will return a stereotyped (but functionless) output object.  This
+will allow foreign importers in strongly typed languages to assign a better
+type to such values.
+
 =head1 PREDEFINED MAPPERS
 
 Several simple mappers are provided for you; most of them only operate on a
@@ -180,6 +185,48 @@ A C<parrot> pragmatic module is provided to enable cross-language import.
     use parrot java => java.util.zip.ZipInputStream;
 
     ZipInputStream->new(...)
+
+=head1 INSIGHTS FOR GENERAL INTEROPERATION
+
+Blizkost follows, in the general, the following rules:
+
+=over 4
+
+=item *
+
+When C<HLLCompiler.import> is used to move values into the namespace, the value
+is coerced into a native type, if there is a very similar one, or otherwise
+wrapped with a proxy object.
+
+=item *
+
+When C<HLLCompiler.get_exports> is used to move values into Parrot space, the
+value is co-coerced into the nearest raw Parrot type, if there is a similar
+one, or otherwise co-wrapped.
+
+=item *
+
+If a container is wrapped, values read from it need to be coerced and values
+written co-coerced; the reverse if co-wrapped.
+
+=item *
+
+If a subroutine (or subroutine-like thing, like an object) is wrapped, values
+passed to it need to be co-coerced and values received from it coerced; reverse
+if co-wrapped.
+
+=item *
+
+Since Perl 5's type system is weaker than the type systems of some other Parrot
+languages, it provides the ability to annotate modules with stronger type
+information.  This information is maintained in a I<neutral registry> and can
+be added to by foreign code, if the original module is not modifiable.
+
+=back
+
+I beleive that if all Parrot HLLs follow these rules, cross-language import
+will Just Work in the majority of important cases (although some type
+information will inevitably be lost, leading to minor ugliness).
 
 =cut
 
