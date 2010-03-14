@@ -17,6 +17,14 @@ These are the vtable functions for the P5Interpreter class.
 #undef __attribute__
 #undef __attribute__noreturn__
 #undef __attribute__deprecated__
+
+#undef __attribute__pure__
+#undef __attribute__format__
+#undef __attribute__nonnull__
+#undef __attribute__warn_unused_result__
+#undef __attribute__unused__
+
+
 #define __attribute__(x) /* */
 #include "init_with_xs.h"
 
