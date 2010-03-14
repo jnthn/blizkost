@@ -29,6 +29,51 @@ Perl extensions extensively rely on these behavioral quirks of SVs, as does the
 core, except the core also depends on representation.  I hold this responsible
 for the death of ponie.
 
+=head1 WHEN PARROTS CANNOT SHARE
+
+In an ideal world, it would always be possible for one Parrot module to simply
+call into another, passing a PMC around, and everything would automatically
+work through vtable magic.  Unfortunately, some (many (most)) real languages
+carry cultural B<universals> about what values do.  These mismatches must be
+handled at the Parrot I<import layer>.
+
+There are two parties in any language clash.  The B<aware component> knows that
+there are two languages involved, and can accept glue responsibilities; the
+B<unaware component> does not, and must not need to be modified.  In current
+Parrot, the aware component is always the importer and the unaware component
+is always the exporter, but this is not required by the scheme detailed here;
+it would be nice to also have the ability to write natively usable (say) Perl6
+modules from Tcl with a minimum of fuss.
+
+In order to minimize data damage, all coercion must occur as late as possible,
+that is, I<import> time.  When a value is imported into Perl5, it is turned
+into some similar SV.  By default, Blizkost uses the most conservative rules -
+all non-readonly values are passed as tied objects.  Compound and contravariant
+objects require run-time coercion, which inherits the coercion rules of the
+main import.
+
+=head1 PROPOSED EXTENSION TO PARROT INTEROPERATION FACILITY
+
+When importing or exporting a value, it should be possible to specify an object
+(often a string, although other roles can also be used) along with the object
+name.  This allows tuning the mapping procedure; the best time to tune mapping
+is at the same time as essential mapping, and data must therefore be passed to
+that depth.
+
+    # from Perl5
+    use parrot Perl6 => 'Perl6Module';
+        # proxy objects are generated - slow but usually right
+    use parrot Perl6 => 'Perl6Module', -LOCAL => 'byvalue';
+        # values are copied - much faster
+    use parrot Perl6 => 'Perl6Module', -LOCAL => 'raw';
+        # we get PMC objects - all marshalling is our duty
+
+    # from Perl6
+    use Perl5Module:from<perl5>;
+        # proxy SVs used
+    use Perl5Module:from<perl5>:remote{:hot_spot<byvalue>};
+        # quicker, but not always right - now restricted to one symbol!
+
 =head1 MAPPERS AND HANDLES
 
 Blizkost relies on a number of B<mappers>.  A mapper is something that knows
@@ -139,12 +184,6 @@ side.  Needs child I<list> mappers to handle boundary conversion.
 Creates an opaque proxy object, which relays only methods.  If some methods
 need special treatment, they can be named.
 
-=head2 default
-
-This one combines wrapper, objproxy, deeparray, deephash, scalarvalue, and
-asref in the most obvious way, attempting to do the Right Thing with all
-values passed to it.
-
 =head1 EXCEPTIONS
 
 Attempting to use a Parrot continuation to exit the dynamic scope of a Perl 5
@@ -163,15 +202,6 @@ C<perl5;Blizkost;ParrotException> object while in Perl.  Exceptions generated
 from Perl 5 are represented by a C<parrot;Blizkost;Perl5Exception> object while
 in Parrot.
 
-=head1 THE REGISTRY
-
-When a value is imported from Perl 5 into Parrot, Blizkost consults an internal
-table mapping symbol names to mapper functions called the B<registry>.  This
-allows imports to I<just work>, even when C<default> doesn't do the right
-thing.  An initial set of mappings is shipped with Blizkost (which is expected
-to grow over time); if your favorite module is not listed, please submit a
-patch, and use the hooks in C<parrot;Blizkost;Registry> in the mean time.
-
 =head1 THE OTHER WAY
 
 Blizkost provides a Perl 5 library which can be used to instantiate a Parrot
@@ -186,47 +216,14 @@ A C<parrot> pragmatic module is provided to enable cross-language import.
 
     ZipInputStream->new(...)
 
-=head1 INSIGHTS FOR GENERAL INTEROPERATION
+=head1 MULTIPLE INTERPRETERS
 
-Blizkost follows, in the general, the following rules:
-
-=over 4
-
-=item *
-
-When C<HLLCompiler.import> is used to move values into the namespace, the value
-is coerced into a native type, if there is a very similar one, or otherwise
-wrapped with a proxy object.
-
-=item *
-
-When C<HLLCompiler.get_exports> is used to move values into Parrot space, the
-value is co-coerced into the nearest raw Parrot type, if there is a similar
-one, or otherwise co-wrapped.
-
-=item *
-
-If a container is wrapped, values read from it need to be coerced and values
-written co-coerced; the reverse if co-wrapped.
-
-=item *
-
-If a subroutine (or subroutine-like thing, like an object) is wrapped, values
-passed to it need to be co-coerced and values received from it coerced; reverse
-if co-wrapped.
-
-=item *
-
-Since Perl 5's type system is weaker than the type systems of some other Parrot
-languages, it provides the ability to annotate modules with stronger type
-information.  This information is maintained in a I<neutral registry> and can
-be added to by foreign code, if the original module is not modifiable.
-
-=back
-
-I beleive that if all Parrot HLLs follow these rules, cross-language import
-will Just Work in the majority of important cases (although some type
-information will inevitably be lost, leading to minor ugliness).
+It will eventually be necessary to support multiple interpreters for a couple
+reasons, principly that Perl interpeters cannot be shared between threads.
+At any given time, each Parrot OS thread may have an attached Perl interpreter;
+if no interpreters exist, one will autovivify if needed (but subsequent
+interpreters must be explicitly created, for idiot resistance).  The Blizkost
+API uses a thread local context interpreter, like Perl itself.
 
 =cut
 
