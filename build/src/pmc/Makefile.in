@@ -36,7 +36,7 @@ LIBPERL   = -lperl
 PMC2C_INCLUDES  = --include $(SRC_DIR) --include $(SRC_DIR)/pmc
 PMC2C           = $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
 PMC2CD          = $(PMC2C) --dump $(PMC2C_INCLUDES)
-PMC2CC          = $(PMC2C) --c $(PMC2C_INCLUDES)
+PMC2CC          = $(PMC2C) -c $(PMC2C_INCLUDES)
 
 INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
 LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
@@ -54,17 +54,11 @@ PMC_SOURCES = \
   p5invocation.pmc
 
 PMC_C = $(PMC_SOURCES:.pmc=.c)
+PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
 
 OBJS = \
   lib-$(BLIZKOST_GROUP)$(O) \
-  p5sv$(O) \
-  p5scalar$(O) \
-  p5array$(O) \
-  p5hash$(O) \
-  p5sub$(O) \
-  p5namespace$(O) \
-  p5interpreter$(O) \
-  p5invocation$(O)
+  $(PMC_SOURCES:.pmc=$(O))
 
 CLEANUPS = \
   "*$(LOAD_EXT)" \
@@ -85,10 +79,15 @@ all: staging
 init_with_xs.h:
 	$(PERL) -MExtUtils::Embed -e xsinit -- -o init_with_xs.h
 
-generate: init_with_xs.h $(PMC_SOURCES)
-	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $(PMC_SOURCES)
-	$(PMC2C) --no-lines --c $(PMC2C_INCLUDES) $(PMC_SOURCES)
-	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) --c $(PMC_SOURCES)
+.SUFFIXES : .pmc .dump
+
+.pmc.dump:
+	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $<
+.pmc.c:
+	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $<
+
+generate: init_with_xs.h $(PMC_SOURCES) $(PMC_DUMP) $(PMC_C)
+	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) -c $(PMC_SOURCES)
 
 compile: generate
 	$(CC) $(CC_OUT)p5sv$(O)  $(INCLUDES) $(CFLAGS) p5sv.c
