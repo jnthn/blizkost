@@ -14,10 +14,7 @@ These are the vtable functions for the P5Hash class
 
 */
 
-pmclass P5Hash group blizkost_group dynpmc provides hash  {
-    VTABLE void init() {
-    }
-
+pmclass P5Hash extends P5SV group blizkost_group dynpmc provides hash  {
     VTABLE PMC *get_pmc_keyed_str(STRING *key) {
     }
 

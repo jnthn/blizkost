@@ -27,21 +27,7 @@ These are the vtable functions for the P5Sub class.
 #include <EXTERN.h>
 #include <perl.h>
 
-pmclass P5Sub group blizkost_group dynpmc {
-
-/*
-
-=item C<void init()>
-
-Set up P5Sub PMC.
-
-
-=cut
-
-*/
-
-    VTABLE void init() {
-    }
+pmclass P5Sub extends P5SV group blizkost_group dynpmc {
 
 
 /*

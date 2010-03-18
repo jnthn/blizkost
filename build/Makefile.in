@@ -38,6 +38,7 @@ BLIZKOST_GROUP = $(PMC_DIR)/blizkost_group$(LOAD_EXT)
 
 PMC_DEPS = \
   build/src/pmc/Makefile.in \
+  $(PMC_DIR)/p5sv.pmc \
   $(PMC_DIR)/p5array.pmc \
   $(PMC_DIR)/p5hash.pmc \
   $(PMC_DIR)/p5interpreter.pmc \

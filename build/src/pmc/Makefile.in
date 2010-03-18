@@ -44,6 +44,7 @@ LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(LIBPERL)
 BLIZKOST_GROUP = blizkost_group
 
 PMC_SOURCES = \
+  p5sv.pmc \
   p5interpreter.pmc \
   p5scalar.pmc \
   p5array.pmc  \
@@ -56,6 +57,7 @@ PMC_C = $(PMC_SOURCES:.pmc=.c)
 
 OBJS = \
   lib-$(BLIZKOST_GROUP)$(O) \
+  p5sv$(O) \
   p5scalar$(O) \
   p5array$(O) \
   p5hash$(O) \
@@ -89,6 +91,7 @@ generate: init_with_xs.h $(PMC_SOURCES)
 	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) --c $(PMC_SOURCES)
 
 compile: generate
+	$(CC) $(CC_OUT)p5sv$(O)  $(INCLUDES) $(CFLAGS) p5sv.c
 	$(CC) $(CC_OUT)p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
 	$(CC) $(CC_OUT)p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
 	$(CC) $(CC_OUT)p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
