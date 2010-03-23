@@ -85,9 +85,29 @@ Decrement reference count of held SV.
             PerlInterpreter *my_perl;
             struct sv       *sv;
             GETATTR_P5SV_p5i(interp, SELF, p5i);
-            GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-            GETATTR_P5SV_sv(interp, SELF, sv);
-            SvREFCNT_dec(sv);
+            /* There is a small destruction order issue here; Parrot
+               may destroy the interpreter before the last SV references.
+               But if the interpreter is destroyed, we have no need, the
+               object is already free!
+
+01:34 < sorear> Austin: the specific question I care about is, given two
+    objects A and B, if A is destroyed, can I assume that either B
+    is alive or PMC_data(B) == NULL?  This is true in all current
+    collectors.
+01:35 < sorear> bacek: VTABLE_mark(A) marks B
+01:36 < sorear> so B is destroyed no earlier than in the same sweep phase as A
+01:37 < sorear> I don't need ordered destruction - only a guarantee that all
+    destruction occurs before all free()ing
+01:38 < sorear> right now it [B] explicitly sets PMC_data(SELF) = NULL in
+    destroy
+01:38 <@bacek> sorear, than answer is "yes"
+            */
+
+            if (PMC_data(p5i)) {
+                GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+                GETATTR_P5SV_sv(interp, SELF, sv);
+                SvREFCNT_dec(sv);
+            }
             mem_sys_free(PMC_data(SELF));
             PMC_data(SELF) = NULL;
         }
