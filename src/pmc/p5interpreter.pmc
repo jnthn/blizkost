@@ -52,7 +52,6 @@ static int inited = 0;
 
 pmclass P5Interpreter group blizkost_group dynpmc {
     ATTR struct interpreter *my_perl;
-    ATTR STRING             *source;
 
 /*
 
@@ -70,7 +69,6 @@ Set up P5Interpreter PMC.
 
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Interpreter_attributes);
-        PObj_custom_mark_SET(SELF);
         PObj_custom_destroy_SET(SELF);
 
         /* Inited before? */
@@ -94,24 +92,6 @@ Set up P5Interpreter PMC.
         /* We turn on auto-flush to avoid oddness in interactions between
          * IO systems. */
         eval_pv("$| = 1", TRUE);
-    }
-
-/*
-
-=item C<void mark()>
-
-Mark source string, if we have one.
-
-=cut
-
-*/
-    VTABLE void mark() {
-        if (PMC_data(SELF)) {
-            STRING *source;
-            GET_ATTR_source(interp, SELF, source);
-            if (source)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)source);
-        }
     }
 
 /*
@@ -143,20 +123,6 @@ Destructor for the P5Interpreter PMC.
 
 /*
 
-=item C<void set_string_native(STRING *source)>
-
-Set the source code that we will run.
-
-=cut
-
-*/
-
-    VTABLE void set_string_native(STRING *source) {
-        SET_ATTR_source(interp, SELF, source);
-    }
-
-/*
-
 =item C<opcode_t *invoke(opcode_t *next)>
 
 Run the Perl 5 code.
@@ -175,9 +141,10 @@ Run the Perl 5 code.
         PMC    *ctx = CURRENT_CONTEXT(INTERP);
         PMC    *call_object = Parrot_pcc_get_signature(INTERP, ctx);
 
+        Parrot_pcc_fill_params_from_c_args(interp, call_object, "S", &source);
+
         /* Get source into a C string so we can give it to Perl 5.
          * XXX We'd best care about encodings and charset here some day. */
-        GET_ATTR_source(interp, SELF, source);
         c_source = Parrot_str_to_cstring(interp, source);
 
         /* Evaluate it. */
@@ -187,7 +154,6 @@ Run the Perl 5 code.
         SETATTR_P5Scalar_p5i(interp, result, SELF);
         SETATTR_P5Scalar_sv(interp, result, SvREFCNT_inc(return_code));
 
-        
         Parrot_pcc_build_call_from_c_args(interp, call_object, "P", result);
 
         /* The following code is cargo culted from nci.pmc */

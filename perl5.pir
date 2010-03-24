@@ -53,7 +53,7 @@ to the blizkost compiler.
 =cut
 
 .sub 'make_interp' :method
-    .param string source
+    .param pmc source
     .param pmc adverbs      :slurpy :named
 
     # We maintain a persistent P5Interpreter per Parrot interpreter. Should
@@ -67,11 +67,18 @@ to the blizkost compiler.
     setprop parrot_interp, '$!p5i', p5i
   have_interp:
 
-    # Set current "to eval" source code, and we're done.
-    p5i = source
-    .return (p5i)
+    .lex "$interp", p5i
+    .lex "$code", source
+    .const 'Sub' $P1 = "interp_stub"
+    capture_lex $P1
+    .return ($P1)
 .end
 
+.sub "interp_stub" :anon :outer("make_interp")
+    $P0 = find_lex "$interp"
+    $P1 = find_lex "$code"
+    .tailcall $P0($P1)
+.end
 
 =item eval
 
