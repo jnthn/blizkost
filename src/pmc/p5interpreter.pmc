@@ -167,10 +167,13 @@ Run the Perl 5 code.
 
     VTABLE opcode_t *invoke(opcode_t *next) {
         struct interpreter *my_perl;
-        PMC    *result, *ns_key, *ns, *return_helper;
+        PMC    *result;
         STRING *source;
         char   *c_source;
         SV     *return_code;
+        PMC    *cont;
+        PMC    *ctx = CURRENT_CONTEXT(INTERP);
+        PMC    *call_object = Parrot_pcc_get_signature(INTERP, ctx);
 
         /* Get source into a C string so we can give it to Perl 5.
          * XXX We'd best care about encodings and charset here some day. */
@@ -184,23 +187,26 @@ Run the Perl 5 code.
         SETATTR_P5Scalar_p5i(interp, result, SELF);
         SETATTR_P5Scalar_sv(interp, result, SvREFCNT_inc(return_code));
 
-        /* Look up return helper. */
-        ns_key = pmc_new(interp, enum_class_ResizableStringArray);
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "parrot"));
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Perl5"));
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Compiler"));
-        ns = Parrot_get_namespace_keyed(interp, interp->root_namespace, ns_key);
-        return_helper = VTABLE_get_pmc_keyed_str(interp, ns, CONST_STRING(interp, "!return_value_helper"));
+        
+        Parrot_pcc_build_call_from_c_args(interp, call_object, "P", result);
 
-        /* Clone it and use property to attach return value (the helper just
-         * handles PCC for us). */
-        return_helper = VTABLE_clone(interp, return_helper);
-        VTABLE_setprop(interp, return_helper, CONST_STRING(interp, "$!ret_val"), result);
-        next = VTABLE_invoke(interp, return_helper, next);
+        /* The following code is cargo culted from nci.pmc */
+        cont = INTERP->current_cont;
 
-        /* Free memory associated with the string, and we're done. */
-        mem_sys_free(c_source);
-        return next;
+        /*
+         * If the NCI function was tailcalled, the return result
+         * is already passed back to the caller of this frame
+         * - see  Parrot_init_ret_nci(). We therefore invoke the
+         * return continuation here, which gets rid of this frame
+         * and returns the real return address
+         */
+        if (cont && cont != NEED_CONTINUATION
+        && (PObj_get_FLAGS(cont) & SUB_FLAG_TAILCALL)) {
+            cont = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
+            next = VTABLE_invoke(INTERP, cont, next);
+        }
+
+        return (opcode_t *)next;
     }
 }
 

@@ -170,9 +170,16 @@ Handles the actual invocation.
         struct sv       *invocant_sv;
         PMC             *invocant_ns;
         int              num_returns, num_pos, i;
-        PMC             *p5i, *results, *ns, *ns_key, *return_helper;
-        PMC             *capture, *named_names, *named_args, *iter;
+        PMC             *p5i, *results, *iter;
         PerlInterpreter *my_perl;
+
+        PMC *ctx         = CURRENT_CONTEXT(interp);
+        PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
+
+        PMC *positional, *named, *cont;
+
+        Parrot_pcc_fill_params_from_c_args(interp, call_object, "PsPns",
+                &positional, &named);
 
         /* Get the interpreter, SV and the name. */
         GET_ATTR_p5i(interp, SELF, p5i);
@@ -181,20 +188,6 @@ Handles the actual invocation.
         c_name = Parrot_str_to_cstring(interp, name);
         GET_ATTR_invocant_sv(interp, SELF, invocant_sv);
         GET_ATTR_invocant_ns(interp, SELF, invocant_ns);
-
-        /* Grab the parameters; toss the invocant as we already have that. */
-        capture     = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));
-        named_names = VTABLE_get_attr_str(interp, capture, string_from_literal(interp, "named"));
-        named_args  = Parrot_pmc_new(interp, enum_class_Hash);
-        if (!PMC_IS_NULL(named_names)) {
-            PMC *iter = VTABLE_get_iter(interp, named_names);
-            while (VTABLE_get_bool(interp, iter)) {
-                STRING *name = VTABLE_shift_string(interp, iter);
-                PMC *value = VTABLE_get_pmc_keyed_str(interp, capture, name);
-                VTABLE_set_pmc_keyed(interp, named_args, name, value);
-            }
-        }
-        VTABLE_shift_pmc(interp, capture);
 
         {
             /* Set up the stack. */
@@ -207,24 +200,25 @@ Handles the actual invocation.
             }
             else {
                 STRING *ns_name;
+                PMC *ns_pmc = Parrot_pmc_new(interp, enum_class_String);
                 GETATTR_P5Namespace_ns_name(interp, invocant_ns, ns_name);
-                VTABLE_unshift_string(interp, capture, ns_name);
+                VTABLE_set_string_native(interp, ns_pmc, ns_name);
+                XPUSHs(marshall_arg(interp, my_perl, ns_pmc));
             }
 
             /* Stick on positional arguments. */
-            i = 0;
-            num_pos = VTABLE_elements(interp, capture);
-            for (i = 0; i < num_pos; i++) {
-                PMC *pos_arg = VTABLE_get_pmc_keyed_int(interp, capture, i);
+            num_pos = VTABLE_elements(interp, positional);
+            for (i = 1; i < num_pos; i++) {
+                PMC *pos_arg = VTABLE_get_pmc_keyed_int(interp, positional, i);
                 XPUSHs(marshall_arg(interp, my_perl, pos_arg));
             }
 
             /* Stick on named arguments (we unbundle them to a string
              * followed by the argument. */
-            iter = VTABLE_get_iter(interp, named_args);
+            iter = VTABLE_get_iter(interp, named);
             while (VTABLE_get_bool(interp, iter)) {
                 STRING *arg_name   = VTABLE_shift_string(interp, iter);
-                PMC    *arg_value  = VTABLE_get_pmc_keyed_str(interp, named_args, arg_name);
+                PMC    *arg_value  = VTABLE_get_pmc_keyed_str(interp, named, arg_name);
                 char   *c_arg_name = Parrot_str_to_cstring(interp, arg_name);
                 XPUSHs(sv_2mortal(newSVpv(c_arg_name, strlen(c_arg_name))));
                 XPUSHs(marshall_arg(interp, my_perl, arg_value));
@@ -250,15 +244,24 @@ Handles the actual invocation.
         }
         mem_sys_free(c_name);
 
-        /* Use the return helper to hand back the result. */
-        ns_key = pmc_new(interp, enum_class_ResizableStringArray);
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "parrot"));
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Perl5"));
-        VTABLE_push_string(interp, ns_key, CONST_STRING(interp, "Compiler"));
-        ns = Parrot_get_namespace_keyed(interp, interp->root_namespace, ns_key);
-        return_helper = VTABLE_get_pmc_keyed_str(interp, ns, CONST_STRING(interp, "!return_value_helper_arr"));
-        return_helper = VTABLE_clone(interp, return_helper);
-        VTABLE_setprop(interp, return_helper, CONST_STRING(interp, "$!ret_val"), results);
-        return VTABLE_invoke(interp, return_helper, next);
+        Parrot_pcc_build_call_from_c_args(interp, call_object, "Ps", results);
+
+        /* The following code is cargo culted from nci.pmc */
+        cont = INTERP->current_cont;
+
+        /*
+         * If the NCI function was tailcalled, the return result
+         * is already passed back to the caller of this frame
+         * - see  Parrot_init_ret_nci(). We therefore invoke the
+         * return continuation here, which gets rid of this frame
+         * and returns the real return address
+         */
+        if (cont && cont != NEED_CONTINUATION
+        && (PObj_get_FLAGS(cont) & SUB_FLAG_TAILCALL)) {
+            cont = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
+            next = VTABLE_invoke(INTERP, cont, next);
+        }
+
+        return (opcode_t *)next;
     }
 }
