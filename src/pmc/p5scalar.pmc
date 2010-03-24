@@ -62,9 +62,9 @@ Returns the integer value of the SV.
         PMC             *p5i;
         PerlInterpreter *my_perl;
         struct sv       *sv;
-        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        GET_ATTR_sv(interp, SELF, sv);
         return SvIV(sv);
     }
 
@@ -82,9 +82,9 @@ Returns the number value of the SV.
         PMC             *p5i;
         PerlInterpreter *my_perl;
         struct sv       *sv;
-        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        GET_ATTR_sv(interp, SELF, sv);
         return SvNV(sv);
     }
 
@@ -102,9 +102,9 @@ Returns the string value of the SV.
         PerlInterpreter *my_perl;
         struct sv       *sv;
         char            *perl5_str;
-        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Scalar_sv(interp, SELF, sv);
+        GET_ATTR_sv(interp, SELF, sv);
         perl5_str = SvPVutf8_nolen(sv);
         return Parrot_str_new(interp, perl5_str, strlen(perl5_str));
     }
@@ -125,15 +125,15 @@ the given name on the given Perl 5 Scalar invocant.
         PerlInterpreter *my_perl;
         struct sv       *invocant;
 
-        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Scalar_sv(interp, SELF, invocant);
+        GET_ATTR_sv(interp, SELF, invocant);
 
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Invocation")));
         SETATTR_P5Invocation_p5i(interp, result, p5i);
         SETATTR_P5Invocation_invocant_sv(interp, result, SvREFCNT_inc(invocant));
         SETATTR_P5Invocation_name(interp, result, name);
-        
+
         return result;
     }
 
@@ -153,9 +153,9 @@ Checks if a class can do a given method.
         INTVAL           result;
         char            *c_name;
 
-        GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Scalar_sv(interp, SELF, invocant);
+        GET_ATTR_sv(interp, SELF, invocant);
         c_name = Parrot_str_to_cstring(interp, name);
 
         /* If it's not blessed, the answer is "no" right off. */

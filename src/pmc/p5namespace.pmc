@@ -52,8 +52,8 @@ Set up P5Namespace PMC.
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Namespace_attributes);
         PObj_custom_mark_SET(SELF);
         PObj_custom_destroy_SET(SELF);
-        SETATTR_P5Namespace_p5i(interp, SELF, p5i);
-        SETATTR_P5Namespace_marshall_cache(interp, SELF, PMCNULL);
+        SET_ATTR_p5i(interp, SELF, p5i);
+        SET_ATTR_marshall_cache(interp, SELF, PMCNULL);
     }
 
 
@@ -70,9 +70,9 @@ Mark GC-ables.
         if (PMC_data(SELF)) {
             PMC    *p5i, *cache;
             STRING *name;
-            GETATTR_P5Namespace_p5i(interp, SELF, p5i);
-            GETATTR_P5Namespace_marshall_cache(interp, SELF, cache);
-            GETATTR_P5Namespace_ns_name(interp, SELF, name);
+            GET_ATTR_p5i(interp, SELF, p5i);
+            GET_ATTR_marshall_cache(interp, SELF, cache);
+            GET_ATTR_ns_name(interp, SELF, name);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
             if (cache)
@@ -108,10 +108,8 @@ Set the name of the Perl 5 namespace that we map to.
 
 */
     VTABLE void set_string_native(STRING *name) {
-        SETATTR_P5Namespace_ns_name(interp, SELF, name);
+        SET_ATTR_ns_name(interp, SELF, name);
     }
-
-    
 
 /*
 
@@ -124,7 +122,7 @@ Hands back a P5Invocation so we can call a method on the package.
 */
     VTABLE PMC *find_method(STRING *name) {
         PMC *p5i, *result;
-        GETATTR_P5Namespace_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
 
         /* Make and return a P5Invocation object. */
         result = pmc_new(interp, pmc_type(interp, CONST_STRING(interp, "P5Invocation")));

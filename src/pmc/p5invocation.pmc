@@ -139,9 +139,9 @@ Mark GC-ables.
         if (PMC_data(SELF)) {
             PMC    *p5i, *invocant_ns;
             STRING *name;
-            GETATTR_P5Invocation_p5i(interp, SELF, p5i);
-            GETATTR_P5Invocation_invocant_ns(interp, SELF, invocant_ns);
-            GETATTR_P5Invocation_name(interp, SELF, name);
+            GET_ATTR_p5i(interp, SELF, p5i);
+            GET_ATTR_invocant_ns(interp, SELF, invocant_ns);
+            GET_ATTR_name(interp, SELF, name);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
             if (invocant_ns)
@@ -173,14 +173,14 @@ Handles the actual invocation.
         PMC             *p5i, *results, *ns, *ns_key, *return_helper;
         PMC             *capture, *named_names, *named_args, *iter;
         PerlInterpreter *my_perl;
-        
+
         /* Get the interpreter, SV and the name. */
-        GETATTR_P5Invocation_p5i(interp, SELF, p5i);
+        GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GETATTR_P5Invocation_name(interp, SELF, name);
+        GET_ATTR_name(interp, SELF, name);
         c_name = Parrot_str_to_cstring(interp, name);
-        GETATTR_P5Invocation_invocant_sv(interp, SELF, invocant_sv);
-        GETATTR_P5Invocation_invocant_ns(interp, SELF, invocant_ns);
+        GET_ATTR_invocant_sv(interp, SELF, invocant_sv);
+        GET_ATTR_invocant_ns(interp, SELF, invocant_ns);
 
         /* Grab the parameters; toss the invocant as we already have that. */
         capture     = Parrot_pcc_get_signature(interp, CURRENT_CONTEXT(interp));

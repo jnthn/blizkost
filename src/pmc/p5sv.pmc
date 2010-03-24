@@ -63,7 +63,7 @@ Mark GC-ables.
     VTABLE void mark() {
         if (PMC_data(SELF)) {
             PMC *p5i;
-            GETATTR_P5Scalar_p5i(interp, SELF, p5i);
+            GET_ATTR_p5i(interp, SELF, p5i);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
         }
@@ -84,7 +84,7 @@ Decrement reference count of held SV.
             PMC             *p5i;
             PerlInterpreter *my_perl;
             struct sv       *sv;
-            GETATTR_P5SV_p5i(interp, SELF, p5i);
+            GET_ATTR_p5i(interp, SELF, p5i);
             /* There is a small destruction order issue here; Parrot
                may destroy the interpreter before the last SV references.
                But if the interpreter is destroyed, we have no need, the
@@ -105,7 +105,7 @@ Decrement reference count of held SV.
 
             if (PMC_data(p5i)) {
                 GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-                GETATTR_P5SV_sv(interp, SELF, sv);
+                GET_ATTR_sv(interp, SELF, sv);
                 SvREFCNT_dec(sv);
             }
             mem_sys_free(PMC_data(SELF));

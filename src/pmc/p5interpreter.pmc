@@ -89,7 +89,7 @@ Set up P5Interpreter PMC.
         perl_parse(my_perl, xs_init, 3, embedding, NULL);
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
         perl_run(my_perl);
-        SETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
+        SET_ATTR_my_perl(interp, SELF, my_perl);
 
         /* We turn on auto-flush to avoid oddness in interactions between
          * IO systems. */
@@ -108,7 +108,7 @@ Mark source string, if we have one.
     VTABLE void mark() {
         if (PMC_data(SELF)) {
             STRING *source;
-            GETATTR_P5Interpreter_source(interp, SELF, source);
+            GET_ATTR_source(interp, SELF, source);
             if (source)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)source);
         }
@@ -127,10 +127,10 @@ Destructor for the P5Interpreter PMC.
         struct interpreter *my_perl;
 
         /* Destroy interpreter if it's got no more usage. */
-        GETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
+        GET_ATTR_my_perl(interp, SELF, my_perl);
         perl_destruct(my_perl);
         perl_free(my_perl);
-        
+
         /* XXX We should only call PERL_SYS_TERM right at the end, not per
          * interpreter destroy. Skip doing it for now at all, but need to
          * work out where to put this. */
@@ -152,7 +152,7 @@ Set the source code that we will run.
 */
 
     VTABLE void set_string_native(STRING *source) {
-        SETATTR_P5Interpreter_source(interp, SELF, source);
+        SET_ATTR_source(interp, SELF, source);
     }
 
 /*
@@ -174,11 +174,11 @@ Run the Perl 5 code.
 
         /* Get source into a C string so we can give it to Perl 5.
          * XXX We'd best care about encodings and charset here some day. */
-        GETATTR_P5Interpreter_source(interp, SELF, source);
+        GET_ATTR_source(interp, SELF, source);
         c_source = Parrot_str_to_cstring(interp, source);
 
         /* Evaluate it. */
-        GETATTR_P5Interpreter_my_perl(interp, SELF, my_perl);
+        GET_ATTR_my_perl(interp, SELF, my_perl);
         return_code = eval_pv(c_source, TRUE);
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
         SETATTR_P5Scalar_p5i(interp, result, SELF);
