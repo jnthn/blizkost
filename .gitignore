@@ -1,7 +1,7 @@
 Makefile
 
 *.pbc
-*.c
+p5*.c
 *.exe
 *.o
 *.obj
@@ -12,14 +12,16 @@ blizkost
 installable_blizkost
 
 src/pmc/*.bundle
-src/pmc/*.c
+src/pmc/p5*.c
 src/pmc/*.dll
 src/pmc/*.dump
-src/pmc/*.h
+src/pmc/pmc*.h
 src/pmc/*.o
 src/pmc/*.obj
 src/pmc/*.pdb
 src/pmc/*.so
+src/pmc/init_with_xs.*
+src/pmc/blizkost_group.*
 
 core*
 *.sw?

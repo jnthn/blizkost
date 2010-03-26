@@ -58,13 +58,14 @@ PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
 
 OBJS = \
   lib-$(BLIZKOST_GROUP)$(O) \
+  bkmarshal$(O) \
   $(PMC_SOURCES:.pmc=$(O))
 
 CLEANUPS = \
   "*$(LOAD_EXT)" \
   "*$(O)" \
-  "*.c" \
-  "*.h" \
+  "p5*.c" \
+  "pmc*.h" \
   "*.dump" \
 #IF(win32):  "*.exp" \
 #IF(win32):  "*.ilk" \
@@ -99,6 +100,7 @@ compile: generate
 	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c
 	$(CC) $(CC_OUT)p5invocation$(O) $(INCLUDES) $(CFLAGS) p5invocation.c
 	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
+	$(CC) $(CC_OUT)bkmarshal$(O) $(INCLUDES) $(CFLAGS) bkmarshal.c
 
 linklibs: compile
 	$(LD) $(LD_OUT)$(BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)

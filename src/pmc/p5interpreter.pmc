@@ -30,6 +30,7 @@ These are the vtable functions for the P5Interpreter class.
 
 /* Need to know a bit about other PMCs. */
 #include "pmc_p5scalar.h"
+#include "bkmarshal.h"
 
 /* Tracking of whether we've initialized or not. */
 static int inited = 0;
@@ -136,8 +137,6 @@ Run the Perl 5 code.
         PMC    *result;
         STRING *source;
         char   *c_source;
-        SV     *return_code;
-        PMC    *cont;
         PMC    *ctx = CURRENT_CONTEXT(INTERP);
         PMC    *call_object = Parrot_pcc_get_signature(INTERP, ctx);
 
@@ -149,30 +148,11 @@ Run the Perl 5 code.
 
         /* Evaluate it. */
         GET_ATTR_my_perl(interp, SELF, my_perl);
-        return_code = eval_pv(c_source, TRUE);
-        result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Scalar")));
-        SETATTR_P5Scalar_p5i(interp, result, SELF);
-        SETATTR_P5Scalar_sv(interp, result, SvREFCNT_inc(return_code));
+        result = blizkost_wrap_sv(interp, SELF, eval_pv(c_source, TRUE));
 
         Parrot_pcc_build_call_from_c_args(interp, call_object, "P", result);
 
-        /* The following code is cargo culted from nci.pmc */
-        cont = INTERP->current_cont;
-
-        /*
-         * If the NCI function was tailcalled, the return result
-         * is already passed back to the caller of this frame
-         * - see  Parrot_init_ret_nci(). We therefore invoke the
-         * return continuation here, which gets rid of this frame
-         * and returns the real return address
-         */
-        if (cont && cont != NEED_CONTINUATION
-        && (PObj_get_FLAGS(cont) & SUB_FLAG_TAILCALL)) {
-            cont = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
-            next = VTABLE_invoke(INTERP, cont, next);
-        }
-
-        return (opcode_t *)next;
+        return blizkost_return_from_invoke(interp, next);
     }
 }
 
