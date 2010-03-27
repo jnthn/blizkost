@@ -35,8 +35,7 @@ opcode_t *blizkost_return_from_invoke(PARROT_INTERP, void *next);
 int blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
         PMC *positional, PMC *named);
 
-void blizkost_call_method(PARROT_INTERP, PMC *p5i, const char *name,
-        SV *invocant_sv, PMC *invocant_ns, PMC *positp, PMC *namedp,
-        PMC **retp);
+void blizkost_call_in(PARROT_INTERP, PMC *p5i, SV *what, U32 mode,
+        PMC *positp, PMC *namedp, PMC **retp);
 
 #endif

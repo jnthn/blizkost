@@ -38,8 +38,6 @@ invocation model and calling conventions.
 
 pmclass P5Invocation group blizkost_group dynpmc {
     ATTR PMC       *p5i;
-    ATTR struct sv *invocant_sv;
-    ATTR PMC       *invocant_ns;
     ATTR STRING    *name;
 
 /*
@@ -56,7 +54,6 @@ Set up P5Invocation PMC.
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Invocation_attributes);
         PObj_custom_mark_SET(SELF);
-        PObj_custom_destroy_SET(SELF);
     }
 
 /*
@@ -70,22 +67,15 @@ Mark GC-ables.
 */
     VTABLE void mark() {
         if (PMC_data(SELF)) {
-            PMC    *p5i, *invocant_ns;
+            PMC    *p5i;
             STRING *name;
             GET_ATTR_p5i(interp, SELF, p5i);
-            GET_ATTR_invocant_ns(interp, SELF, invocant_ns);
             GET_ATTR_name(interp, SELF, name);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-            if (invocant_ns)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)invocant_ns);
             if (name)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
         }
-    }
-
-    VTABLE void destroy() {
-        /* XXX TODO. */
     }
 
 /*
@@ -100,28 +90,31 @@ Handles the actual invocation.
     VTABLE opcode_t *invoke(void *next) {
         STRING          *name;
         char            *c_name;
-        struct sv       *invocant_sv;
-        PMC             *invocant_ns;
         PMC             *p5i, *results;
 
         PMC *ctx         = CURRENT_CONTEXT(interp);
         PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
 
         PMC *positional, *named;
+        PerlInterpreter *my_perl;
+
+        SV *namesv;
 
         Parrot_pcc_fill_params_from_c_args(interp, call_object, "PsPns",
                 &positional, &named);
 
         /* Get the interpreter, SV and the name. */
         GET_ATTR_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
         GET_ATTR_name(interp, SELF, name);
         c_name = Parrot_str_to_cstring(interp, name);
-        GET_ATTR_invocant_sv(interp, SELF, invocant_sv);
-        GET_ATTR_invocant_ns(interp, SELF, invocant_ns);
 
-        blizkost_call_method(interp, p5i, c_name, invocant_sv, invocant_ns,
-                positional, named, &results);
+        namesv = newSVpv(c_name, strlen(c_name));
 
+        blizkost_call_in(interp, p5i, namesv, G_METHOD | G_ARRAY, positional,
+                named, &results);
+
+        SvREFCNT_dec(namesv);
         mem_sys_free(c_name);
 
         Parrot_pcc_build_call_from_c_args(interp, call_object, "Ps", results);

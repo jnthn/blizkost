@@ -131,7 +131,6 @@ the given name on the given Perl 5 Scalar invocant.
 
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Invocation")));
         SETATTR_P5Invocation_p5i(interp, result, p5i);
-        SETATTR_P5Invocation_invocant_sv(interp, result, SvREFCNT_inc(invocant));
         SETATTR_P5Invocation_name(interp, result, name);
 
         return result;

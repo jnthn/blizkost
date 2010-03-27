@@ -127,7 +127,6 @@ Hands back a P5Invocation so we can call a method on the package.
         /* Make and return a P5Invocation object. */
         result = pmc_new(interp, pmc_type(interp, CONST_STRING(interp, "P5Invocation")));
         SETATTR_P5Invocation_p5i(interp, result, p5i);
-        SETATTR_P5Invocation_invocant_ns(interp, result, SELF);
         SETATTR_P5Invocation_name(interp, result, name);
         return result;
     }

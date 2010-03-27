@@ -62,6 +62,13 @@ blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
     else if (VTABLE_isa(interp, arg, CONST_STRING(interp, "Float"))) {
         result = sv_2mortal(newSVnv(VTABLE_get_number(interp, arg)));
     }
+    else if (VTABLE_isa(interp, arg, CONST_STRING(interp, "P5Namespace"))) {
+        STRING *pkg;
+        char *c_str;
+        GETATTR_P5Namespace_ns_name(interp, arg, pkg);
+        c_str = Parrot_str_to_cstring(interp, pkg);
+        result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
+    }
     else if (VTABLE_isa(interp, arg, CONST_STRING(interp, "String"))) {
         char *c_str = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, arg));
         result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
@@ -186,8 +193,8 @@ blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
 }
 
 void
-blizkost_call_method(PARROT_INTERP, PMC *p5i, const char *name, SV *invocant_sv,
-        PMC *invocant_ns, PMC *positp, PMC *namedp, PMC **retp) {
+blizkost_call_in(PARROT_INTERP, PMC *p5i, SV *what, U32 mode, PMC *positp,
+        PMC *namedp, PMC **retp) {
     PerlInterpreter *my_perl;
     int num_returns, i;
 
@@ -199,23 +206,12 @@ blizkost_call_method(PARROT_INTERP, PMC *p5i, const char *name, SV *invocant_sv,
         ENTER;
         SAVETMPS;
         PUSHMARK(SP);
-        if (invocant_sv) {
-            XPUSHs(sv_2mortal(SvREFCNT_inc(invocant_sv)));
-        }
-        else {
-            STRING *ns_name;
-            PMC *ns_pmc = Parrot_pmc_new(interp, enum_class_String);
-            GETATTR_P5Namespace_ns_name(interp, invocant_ns, ns_name);
-            VTABLE_set_string_native(interp, ns_pmc, ns_name);
-            XPUSHs(blizkost_marshal_arg(interp, my_perl, ns_pmc));
-        }
 
-        VTABLE_shift_pmc(interp, positp);
         PUTBACK;
         blizkost_slurpy_to_stack(interp, my_perl, positp, namedp);
 
         /* Invoke the methods. */
-        num_returns = call_method(name, G_ARRAY);
+        num_returns = call_sv(what, mode);
         SPAGAIN;
 
         /* Build the results PMC array. */
