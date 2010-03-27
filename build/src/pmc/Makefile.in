@@ -47,9 +47,6 @@ PMC_SOURCES = \
   p5sv.pmc \
   p5interpreter.pmc \
   p5scalar.pmc \
-  p5array.pmc  \
-  p5hash.pmc   \
-  p5sub.pmc    \
   p5namespace.pmc \
   p5invocation.pmc
 
@@ -93,9 +90,6 @@ generate: init_with_xs.h $(PMC_SOURCES) $(PMC_DUMP) $(PMC_C)
 compile: generate
 	$(CC) $(CC_OUT)p5sv$(O)  $(INCLUDES) $(CFLAGS) p5sv.c
 	$(CC) $(CC_OUT)p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
-	$(CC) $(CC_OUT)p5array$(O)  $(INCLUDES) $(CFLAGS) p5array.c
-	$(CC) $(CC_OUT)p5hash$(O)  $(INCLUDES) $(CFLAGS) p5hash.c
-	$(CC) $(CC_OUT)p5sub$(O)  $(INCLUDES) $(CFLAGS) p5sub.c
 	$(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
 	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c
 	$(CC) $(CC_OUT)p5invocation$(O) $(INCLUDES) $(CFLAGS) p5invocation.c

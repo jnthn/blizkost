@@ -39,12 +39,9 @@ BLIZKOST_GROUP = $(PMC_DIR)/blizkost_group$(LOAD_EXT)
 PMC_DEPS = \
   build/src/pmc/Makefile.in \
   $(PMC_DIR)/p5sv.pmc \
-  $(PMC_DIR)/p5array.pmc \
-  $(PMC_DIR)/p5hash.pmc \
   $(PMC_DIR)/p5interpreter.pmc \
   $(PMC_DIR)/p5namespace.pmc \
-  $(PMC_DIR)/p5scalar.pmc \
-  $(PMC_DIR)/p5sub.pmc
+  $(PMC_DIR)/p5scalar.pmc
 
 SOURCES = \
   perl5.pir
