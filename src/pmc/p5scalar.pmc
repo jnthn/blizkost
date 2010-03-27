@@ -138,6 +138,38 @@ the given name on the given Perl 5 Scalar invocant.
 
 /*
 
+=item C<opcode_t *invoke(void *next)>
+
+Attempts to invoke the target of a code reference.
+
+=cut
+
+*/
+    VTABLE opcode_t *invoke(void *next) {
+        PMC             *p5i, *positional, *named, *results;
+        PerlInterpreter *my_perl;
+        SV              *invref;
+
+        PMC *ctx         = CURRENT_CONTEXT(interp);
+        PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
+
+        GET_ATTR_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GET_ATTR_sv(interp, SELF, invref);
+
+        Parrot_pcc_fill_params_from_c_args(interp, call_object, "PsPns",
+                &positional, &named);
+
+        blizkost_call_in(interp, p5i, invref, G_ARRAY, positional, named,
+                &results);
+
+        Parrot_pcc_build_call_from_c_args(interp, call_object, "Pf", results);
+
+        return blizkost_return_from_invoke(interp, next);
+    }
+
+/*
+
 =item C<INTVAL can(STRING *name)>
 
 Checks if a class can do a given method.

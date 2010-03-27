@@ -117,7 +117,7 @@ Handles the actual invocation.
         SvREFCNT_dec(namesv);
         mem_sys_free(c_name);
 
-        Parrot_pcc_build_call_from_c_args(interp, call_object, "Ps", results);
+        Parrot_pcc_build_call_from_c_args(interp, call_object, "Pf", results);
 
         return blizkost_return_from_invoke(interp, next);
     }
