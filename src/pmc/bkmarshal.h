@@ -38,4 +38,10 @@ int blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
 void blizkost_call_in(PARROT_INTERP, PMC *p5i, SV *what, U32 mode,
         PMC *positp, PMC *namedp, PMC **retp);
 
+void blizkost_bind_pmc_to_sv(PerlInterpreter *my_perl, SV *sv,
+        PARROT_INTERP, PMC *p5i, PMC *target);
+
+void blizkost_get_bound_pmc(PerlInterpreter *my_perl, SV *sv,
+        Parrot_Interp *interpr, PMC **p5ir, PMC **targetr);
+
 #endif

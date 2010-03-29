@@ -14,8 +14,10 @@ src/pmc/p5marshal.c - wrap P5 and Parrot calling conventions
 
 /* Various Perl 5 headers that we need. */
 #undef _
+#define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
+#include <XSUB.h>
 
 
 /* Plus need to know about the interpreter and scalar wrapper. */
@@ -227,3 +229,106 @@ blizkost_call_in(PARROT_INTERP, PMC *p5i, SV *what, U32 mode, PMC *positp,
     }
 }
 
+/*
+
+=item C<void blizkost_bind_pmc_to_sv(PerlInterpreter *my_perl, SV *sv,
+PARROT_INTERP, PMC *p5i, PMC *target)>
+
+=item C<void blizkost_get_bound_pmc(PerlInterpreter *my_perl, SV *sv,
+Parrot_Interp *interpr, PMC **p5ir, PMC **targetr)>
+
+Magically associates PMCs with SVs.  Since the latter function is intended
+for use in callbacks from Perl 5, it throws a Perl 5 exception on failure.
+
+=cut
+
+*/
+
+static int
+blizkost_delete_binding(PerlInterpreter *my_perl, SV *handle, MAGIC *mg)
+{
+    Parrot_P5Interpreter_attributes *back
+        = (Parrot_P5Interpreter_attributes *)(mg->mg_ptr);
+
+    PMC *targ = (PMC *)(mg->mg_obj);
+    Parrot_Interp interp = back->parrot_interp;
+
+    PARROT_CALLIN_START(interp);
+    Parrot_pmc_gc_unregister(interp, targ);
+    PARROT_CALLIN_END(interp);
+
+    return 0;
+}
+
+static MGVTBL blizkost_binder_vtbl = { 0, 0, 0, 0, blizkost_delete_binding,
+    0, 0, 0 };
+
+void
+blizkost_get_bound_pmc(PerlInterpreter *my_perl, SV *sv,
+        Parrot_Interp *interpr, PMC **p5ir, PMC **targetr) {
+    MAGIC *mgp;
+    Parrot_P5Interpreter_attributes *back;
+
+    if (SvMAGICAL(sv))
+        for (mgp = SvMAGIC(sv); mgp; mgp = mgp->mg_moremagic)
+            if (mgp->mg_virtual == &blizkost_binder_vtbl)
+                goto gotmagic;
+
+    croak("blizkost: expected a bound PMC, got something else");
+
+gotmagic:
+
+    back = (Parrot_P5Interpreter_attributes *)(mgp->mg_ptr);
+
+    *interpr = back->parrot_interp;
+    *p5ir    = back->self;
+    *targetr = (PMC *)mgp->mg_obj;
+}
+
+void
+blizkost_bind_pmc_to_sv(PerlInterpreter *my_perl, SV *sv,
+        PARROT_INTERP, PMC *p5i, PMC *target) {
+    MAGIC *mg;
+
+    mg = sv_magicext(sv, 0, PERL_MAGIC_ext, &blizkost_binder_vtbl, 0, 0);
+    mg->mg_ptr = (char*)PARROT_P5INTERPRETER(p5i);
+    mg->mg_obj = (SV*)  target;
+
+    Parrot_pmc_gc_register(interp, target);
+}
+
+#if 0
+/* can't really use xsubpp here... */
+static
+XS(blizkost_callable_trampoline)
+{
+#ifdef dVAR
+    dVAR;
+#endif
+    dXSARGS;
+    PMC *callable, *p5i;
+    Parrot_Interp interp;
+    int i;
+    PMC *args, *posret, *namret;
+
+    blizkost_get_bound_pmc(my_perl, (SV *)cv, &interp, &p5i, &callable);
+
+    PERL_UNUSED_VAR(ax);
+    SP -= items;
+
+    args = Parrot_pmc_new(interp, enum_class_ResizablePMCArray);
+    for (i = 0; i < items; i++) {
+        SV *svarg = ST(i);
+        PMC *pmcarg = blizkost_wrap_sv(interp, p5i, result_sv);
+        VTABLE_unshift_pmc(interp, args, pmcarg);
+    }
+
+    Parrot_pcc_invoke_sub_from_c_args(interp, callable, "Pf->PsPsn",
+            args, &posret, &namret);
+
+    blizkost_slurpy_to_stack(interp, my_perl, posret, namret);
+
+    PUTBACK;
+}
+
+#endif

@@ -53,6 +53,10 @@ static int inited = 0;
 
 pmclass P5Interpreter group blizkost_group dynpmc {
     ATTR struct interpreter *my_perl;
+    /* These fields are here so that the callin code can use P5Interpreter
+       attribute blocks as a proxy.  Possibly a bit hackish. */
+    ATTR Parrot_Interp parrot_interp;
+    ATTR PMC *self;
 
 /*
 
