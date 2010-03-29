@@ -70,7 +70,7 @@ Returns the integer value of the SV.
 
 /*
 
-=item C<NUMVAL get_integer()>
+=item C<NUMVAL get_number()>
 
 Returns the number value of the SV.
 

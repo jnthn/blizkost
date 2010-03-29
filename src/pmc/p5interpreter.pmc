@@ -93,6 +93,8 @@ Set up P5Interpreter PMC.
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
         perl_run(my_perl);
         SET_ATTR_my_perl(interp, SELF, my_perl);
+        SET_ATTR_self(interp, SELF, SELF);
+        SET_ATTR_parrot_interp(interp, SELF, interp);
 
         /* We turn on auto-flush to avoid oddness in interactions between
          * IO systems. */

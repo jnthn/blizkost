@@ -33,6 +33,10 @@ src/pmc/p5marshal.c - wrap P5 and Parrot calling conventions
 #include "bkmarshal.h"
 #include "parrot/oplib/ops.h"
 
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static CV *blizkost_wrap_callable(PARROT_INTERP, PMC *p5i, PMC *callable);
+
 /*
 
 =item C<SV *blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg)>
@@ -46,8 +50,11 @@ Takes a PMC and marshals it into an SV that we can pass to Perl 5.
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 SV *
-blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
+blizkost_marshal_arg(PARROT_INTERP, PMC *p5i, PMC *arg) {
     struct sv *result = NULL;
+    PerlInterpreter *my_perl;
+
+    GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
 
     /* If it's a P5Scalar PMC, then we just fetch the SV from it - trivial
      * round-tripping. */
@@ -75,6 +82,10 @@ blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
         char *c_str = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, arg));
         result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
     }
+    else if (VTABLE_isa(interp, arg, CONST_STRING(interp, "Sub"))) {
+        CV *wrapper = blizkost_wrap_callable(interp, p5i, arg);
+        result = sv_2mortal(newRV_inc((SV*)wrapper));
+    }
     else if ( VTABLE_does(interp, arg, CONST_STRING(interp, "array"))) {
         PMC *iter;
         struct av *array = newAV();
@@ -82,10 +93,10 @@ blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
         while (VTABLE_get_bool(interp, iter)) {
              PMC *item = VTABLE_shift_pmc(interp, iter);
              struct sv *marshaled =
-                blizkost_marshal_arg(interp, my_perl, item);
+                blizkost_marshal_arg(interp, p5i, item);
              av_push( array, marshaled);
         }
-        result = newRV_inc(array);
+        result = newRV_inc((SV*)array);
 
     }
     else if ( VTABLE_does(interp, arg, CONST_STRING(interp, "hash"))) {
@@ -96,11 +107,11 @@ blizkost_marshal_arg(PARROT_INTERP, PerlInterpreter *my_perl, PMC *arg) {
         for(i = 0; i < n; i++) {
             STRING *s = VTABLE_shift_string(interp, iter);
             char *c_str = Parrot_str_to_cstring(interp, s);
-            struct sv *val = blizkost_marshal_arg(interp, my_perl,
+            struct sv *val = blizkost_marshal_arg(interp, p5i,
                     VTABLE_get_pmc_keyed_str(interp, arg, s));
             hv_store(hash, c_str, strlen(c_str), val, 0);
         }
-        result = newRV_inc(hash);
+        result = newRV_inc((SV*)hash);
     }
     else {
         Parrot_ex_throw_from_c_args(interp, NULL, 1,
@@ -163,7 +174,7 @@ blizkost_return_from_invoke(PARROT_INTERP, void *next) {
 }
 
 int
-blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
+blizkost_slurpy_to_stack(PARROT_INTERP, PMC *p5i, PerlInterpreter *my_perl,
         PMC *positional, PMC *named) {
     int num_pos, i, stkdepth;
     PMC *iter;
@@ -175,7 +186,7 @@ blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
     num_pos = VTABLE_elements(interp, positional);
     for (i = 0; i < num_pos; i++) {
         PMC *pos_arg = VTABLE_get_pmc_keyed_int(interp, positional, i);
-        XPUSHs(blizkost_marshal_arg(interp, my_perl, pos_arg));
+        XPUSHs(blizkost_marshal_arg(interp, p5i, pos_arg));
         stkdepth++;
     }
 
@@ -187,7 +198,7 @@ blizkost_slurpy_to_stack(PARROT_INTERP, PerlInterpreter *my_perl,
         PMC    *arg_value  = VTABLE_get_pmc_keyed_str(interp, named, arg_name);
         char   *c_arg_name = Parrot_str_to_cstring(interp, arg_name);
         XPUSHs(sv_2mortal(newSVpv(c_arg_name, strlen(c_arg_name))));
-        XPUSHs(blizkost_marshal_arg(interp, my_perl, arg_value));
+        XPUSHs(blizkost_marshal_arg(interp, p5i, arg_value));
         stkdepth += 2;
     }
     PUTBACK;
@@ -210,7 +221,7 @@ blizkost_call_in(PARROT_INTERP, PMC *p5i, SV *what, U32 mode, PMC *positp,
         PUSHMARK(SP);
 
         PUTBACK;
-        blizkost_slurpy_to_stack(interp, my_perl, positp, namedp);
+        blizkost_slurpy_to_stack(interp, p5i, my_perl, positp, namedp);
 
         /* Invoke the methods. */
         num_returns = call_sv(what, mode);
@@ -297,7 +308,6 @@ blizkost_bind_pmc_to_sv(PerlInterpreter *my_perl, SV *sv,
     Parrot_pmc_gc_register(interp, target);
 }
 
-#if 0
 /* can't really use xsubpp here... */
 static
 XS(blizkost_callable_trampoline)
@@ -315,20 +325,35 @@ XS(blizkost_callable_trampoline)
 
     PERL_UNUSED_VAR(ax);
     SP -= items;
+    PUTBACK;
 
     args = Parrot_pmc_new(interp, enum_class_ResizablePMCArray);
     for (i = 0; i < items; i++) {
         SV *svarg = ST(i);
-        PMC *pmcarg = blizkost_wrap_sv(interp, p5i, result_sv);
+        PMC *pmcarg = blizkost_wrap_sv(interp, p5i, svarg);
         VTABLE_unshift_pmc(interp, args, pmcarg);
     }
 
     Parrot_pcc_invoke_sub_from_c_args(interp, callable, "Pf->PsPsn",
             args, &posret, &namret);
 
-    blizkost_slurpy_to_stack(interp, my_perl, posret, namret);
+    blizkost_slurpy_to_stack(interp, p5i, my_perl, posret, namret);
 
-    PUTBACK;
+    SPAGAIN;
 }
 
-#endif
+PARROT_WARN_UNUSED_RESULT
+PARROT_CANNOT_RETURN_NULL
+static CV *
+blizkost_wrap_callable(PARROT_INTERP, PMC *p5i, PMC *callable) {
+    PerlInterpreter *my_perl;
+    CV *cv;
+
+    GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+
+    cv = newXS("blizkost_xs_wrapper", blizkost_callable_trampoline,
+            "bkmarshal.c");
+    blizkost_bind_pmc_to_sv(my_perl, (SV*)cv, interp, p5i, callable);
+
+    return cv;
+}
