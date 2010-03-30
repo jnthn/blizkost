@@ -134,11 +134,15 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 blizkost_wrap_sv(PARROT_INTERP, PMC *p5i, SV *sv) {
-    PMC *result_pmc = Parrot_pmc_new(interp, pmc_type(interp,
+    PMC *pmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                 string_from_literal(interp, "P5Scalar")));
-    SETATTR_P5Scalar_p5i(interp, result_pmc, p5i);
-    SETATTR_P5Scalar_sv(interp, result_pmc, SvREFCNT_inc(sv));
-    return result_pmc;
+    PMC_data(pmc) = mem_allocate_zeroed_typed(Parrot_P5Scalar_attributes);
+    PObj_custom_mark_SET(pmc);
+    PObj_custom_destroy_SET(pmc);
+
+    SETATTR_P5Scalar_p5i(interp, pmc, p5i);
+    SETATTR_P5Scalar_sv(interp, pmc, SvREFCNT_inc(sv));
+    return pmc;
 }
 
 /*

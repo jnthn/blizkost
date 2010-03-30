@@ -45,10 +45,8 @@ Set up P5SV PMC.
 */
 
     VTABLE void init() {
-        /* Set up the underlying structure. */
-        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5SV_attributes);
-        PObj_custom_mark_SET(SELF);
-        PObj_custom_destroy_SET(SELF);
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
+            "P5SV values can only be created through an interpreter");
     }
 
 /*
