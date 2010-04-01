@@ -90,8 +90,7 @@ to the blizkost compiler.
     .param pmc adverbs         :slurpy :named
     
     $P0 = self.'compile'(code, adverbs :flat :named)
-    ($P1 :slurpy, $P2 :slurpy :named)  = $P0()
-    .return ($P1 :flat, $P2 :flat :named)
+    .tailcall $P0()
 .end
 
 =item load_library
