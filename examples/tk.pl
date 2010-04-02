@@ -10,11 +10,12 @@ my %exp  := $comp.get_exports($mod);
 
 my $mw := %exp<sub><&MainWindow>().new;
 
-$mw.Label(-text => 'Hello, world!').pack;
+$mw.Label('-text', 'Hello, world!').pack;
 
+# NQP doesn't support named args starting with a dash
 $mw.Button(
-    -text    => 'Quit',
-    -command => sub (*@_) { exit },
+    '-text',    'Quit',
+    '-command', sub (*@_) { exit },
 ).pack;
 
 
