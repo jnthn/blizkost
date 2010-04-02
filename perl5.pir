@@ -25,8 +25,7 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
     $P1 = loadlib 'blizkost_group', $P0
     load_bytecode 'PCT.pbc'
 
-    $P2 = new "ResizablePMCArray"
-    push $P2, "$!interp"
+    $P2 = split ' ', '$!interp $!requirer'
 
     $P0 = get_root_global ['parrot'], 'P6metaclass'
     $P1 = $P0.'new_class'('Perl5::Compiler', 'parent'=>'PCT::HLLCompiler', 'attr'=>$P2)
@@ -54,11 +53,16 @@ to the blizkost compiler.
 # We maintain one P5Interpreter (Perl heap) per Parrot heap (compreg object),
 # to avoid suprising duplication.  TODO: locking.
 .sub '!force' :method
-    .local pmc p5i
+    .local pmc p5i, requirer
     p5i = getattribute self, "$!interp"
     unless null p5i goto have_interp
+
     p5i = new 'P5Interpreter'
     setattribute self, "$!interp", p5i
+
+    requirer = p5i('sub { my ($n) = @_; $n =~ s|::|/|g; $n .= ".pm"; require $n }')
+    setattribute self, "$!requirer", requirer
+
   have_interp:
 .end
 
@@ -115,11 +119,11 @@ Implements the HLLCompiler library loading interface.
     # XXX Add a number to make it unique per use.
     .local string package_name, name_str
     package_name = 'BLIZKOST::TEMP::IMPORT'
-    $S0 = concat 'package ', package_name
-    $S0 = concat ";\nuse "
     name_str = join '::', name
-    $S0 = concat name_str
-    self.'eval'($S0)
+
+    self.'!force'()
+    $P0 = getattribute self, '$!requirer'
+    $P0(name_str)
 
     # Make namespace wrapper PMC.
     .local pmc ns_wrapper, p5i
