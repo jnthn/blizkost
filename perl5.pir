@@ -105,44 +105,29 @@ to the blizkost compiler.
     .tailcall $P0()
 .end
 
-=item load_library
+=item load_module(name)
 
-Implements the HLLCompiler library loading interface.
+=item get_module(name)
+
+Implements the PDD-31 library loading interface.
 
 =cut
 
-.sub 'load_library' :method
-    .param pmc name
+.sub 'load_module' :method
+    .param pmc name_str
     .param pmc extra :named :slurpy
-
-    # Construct a use into some dummy package.
-    # XXX Add a number to make it unique per use.
-    .local string package_name, name_str
-    package_name = 'BLIZKOST::TEMP::IMPORT'
-    name_str = join '::', name
 
     self.'!force'()
     $P0 = getattribute self, '$!requirer'
     $P0(name_str)
 
-    # Make namespace wrapper PMC.
-    .local pmc ns_wrapper, p5i
-    p5i = getattribute self, "$!interp"
-    ns_wrapper = new ['P5Namespace'], p5i
-    ns_wrapper = name_str
+    .return (name_str)
+.end
 
-    # Set up imports. XXX No import symbols yet, todo.
-    .local pmc imports
-    imports = new ['Hash']
-    $P0 = new ['Hash']
-    imports['DEFAULT'] = $P0
+.sub 'get_module' :method
+    .param pmc name_str
 
-    # Construct library info hash.
-    .local pmc result
-    result = new ['Hash']
-    result['namespace'] = ns_wrapper
-    result['symbols'] = imports
-    .return (result)
+    .return (name_str)
 .end
 
 =back
