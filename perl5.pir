@@ -25,9 +25,13 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
     $P1 = loadlib 'blizkost_group', $P0
     load_bytecode 'PCT.pbc'
 
+    $P2 = new "ResizablePMCArray"
+    push $P2, "$!interp"
+
     $P0 = get_root_global ['parrot'], 'P6metaclass'
-    $P1 = $P0.'new_class'('Perl5::Compiler', 'parent'=>'PCT::HLLCompiler')
+    $P1 = $P0.'new_class'('Perl5::Compiler', 'parent'=>'PCT::HLLCompiler', 'attr'=>$P2)
     $P1.'language'('perl5')
+
     $P0 = split ' ', 'make_interp'
     setattribute $P1, '@stages', $P0
 .end
@@ -47,6 +51,16 @@ to the blizkost compiler.
     $P1 = $P0.'command_line'(args)
 .end
 
+# We maintain one P5Interpreter (Perl heap) per Parrot heap (compreg object),
+# to avoid suprising duplication.  TODO: locking.
+.sub '!force' :method
+    .local pmc p5i
+    p5i = getattribute self, "$!interp"
+    unless null p5i goto have_interp
+    p5i = new 'P5Interpreter'
+    setattribute self, "$!interp", p5i
+  have_interp:
+.end
 
 =item make_interp()
 
@@ -56,16 +70,10 @@ to the blizkost compiler.
     .param pmc source
     .param pmc adverbs      :slurpy :named
 
-    # We maintain a persistent P5Interpreter per Parrot interpreter. Should
-    # be a reasonable strategy, or at least we'll try it until somebody can
-    # say why it's wrong and give us a better one.
-    .local pmc parrot_interp, p5i
-    parrot_interp = getinterp
-    p5i = getprop '$!p5i', parrot_interp
-    unless null p5i goto have_interp
-    p5i = new 'P5Interpreter'
-    setprop parrot_interp, '$!p5i', p5i
-  have_interp:
+    self.'!force'()
+
+    .local pmc p5i
+    p5i = getattribute self, "$!interp"
 
     .lex "$interp", p5i
     .lex "$code", source
@@ -88,7 +96,7 @@ to the blizkost compiler.
     .param pmc code
     .param pmc args            :slurpy
     .param pmc adverbs         :slurpy :named
-    
+
     $P0 = self.'compile'(code, adverbs :flat :named)
     .tailcall $P0()
 .end
@@ -115,8 +123,7 @@ Implements the HLLCompiler library loading interface.
 
     # Make namespace wrapper PMC.
     .local pmc ns_wrapper, p5i
-    $P0 = getinterp
-    p5i = getprop '$!p5i', $P0
+    p5i = getattribute self, "$!interp"
     ns_wrapper = new ['P5Namespace'], p5i
     ns_wrapper = name_str
 
