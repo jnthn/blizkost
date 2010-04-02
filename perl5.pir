@@ -17,11 +17,11 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
 
 =cut
 
+.include "dlopenflags.pasm"
 .namespace [ 'Perl5' ; 'Compiler' ]
 
 .sub 'onload' :anon :load :init
-    # XXX can I access the symbolic constants?
-    $P0 = box 1
+    $P0 = box .Parrot_dlopen_global_FLAG
     $P1 = loadlib 'blizkost_group', $P0
     load_bytecode 'PCT.pbc'
 
