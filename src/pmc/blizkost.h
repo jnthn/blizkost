@@ -23,6 +23,27 @@ does the necessary cruft to import both in the same file.
 #include "parrot/extend.h"
 #include "parrot/dynext.h"
 
+/* clear out a few macros that Perl wants to define itself */
+
+#undef HASATTRIBUTE_PURE
+#undef HASATTRIBUTE_UNUSED
+#undef HASATTRIBUTE_NONNULL
+#undef HASATTRIBUTE_MALLOC
+#undef HASATTRIBUTE_NORETURN
+#undef HASATTRIBUTE_UNUSED
+#undef HASATTRIBUTE_WARN_UNUSED_RESULT
+#undef HASATTRIBUTE_DEPRECATED
+
+#undef _
+
+#undef __attribute__deprecated__
+#undef __attribute__format__
+#undef __attribute__nonnull__
+#undef __attribute__noreturn__
+#undef __attribute__pure__
+#undef __attribute__unused__
+#undef __attribute__warn_unused_result__
+
 #define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
