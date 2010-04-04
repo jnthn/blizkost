@@ -16,7 +16,7 @@ These are the vtable functions for the P5Scalar class.
 
 #include "blizkost.h"
 
-pmclass P5Scalar extends P5SV group blizkost_group dynpmc {
+pmclass P5Scalar extends P5SV group blizkost_group dynpmc auto_attrs {
 
 /*
 

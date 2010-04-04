@@ -16,7 +16,7 @@ These are the vtable functions for the P5SV class.
 
 #include "blizkost.h"
 
-pmclass P5SV group blizkost_group dynpmc {
+pmclass P5SV group blizkost_group dynpmc auto_attrs {
     ATTR PMC       *p5i;
     ATTR struct sv *sv;
 
@@ -45,12 +45,10 @@ Mark GC-ables.
 
 */
     VTABLE void mark() {
-        if (PMC_data(SELF)) {
-            PMC *p5i;
-            GET_ATTR_p5i(interp, SELF, p5i);
-            if (p5i)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-        }
+        PMC *p5i;
+        GET_ATTR_p5i(interp, SELF, p5i);
+        if (p5i)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
     }
 
 
@@ -64,36 +62,32 @@ Decrement reference count of held SV.
 
 */
     VTABLE void destroy() {
-        if (PMC_data(SELF)) {
-            PMC             *p5i;
-            PerlInterpreter *my_perl;
-            struct sv       *sv;
-            GET_ATTR_p5i(interp, SELF, p5i);
-            /* There is a small destruction order issue here; Parrot
-               may destroy the interpreter before the last SV references.
-               But if the interpreter is destroyed, we have no need, the
-               object is already free!
+        PMC             *p5i;
+        PerlInterpreter *my_perl;
+        struct sv       *sv;
+        GET_ATTR_p5i(interp, SELF, p5i);
+        /* There is a small destruction order issue here; Parrot
+           may destroy the interpreter before the last SV references.
+           But if the interpreter is destroyed, we have no need, the
+           object is already free!
 
 01:34 < sorear> Austin: the specific question I care about is, given two
-    objects A and B, if A is destroyed, can I assume that either B
-    is alive or PMC_data(B) == NULL?  This is true in all current
-    collectors.
+objects A and B, if A is destroyed, can I assume that either B
+is alive or PMC_data(B) == NULL?  This is true in all current
+collectors.
 01:35 < sorear> bacek: VTABLE_mark(A) marks B
 01:36 < sorear> so B is destroyed no earlier than in the same sweep phase as A
 01:37 < sorear> I don't need ordered destruction - only a guarantee that all
-    destruction occurs before all free()ing
+destruction occurs before all free()ing
 01:38 < sorear> right now it [B] explicitly sets PMC_data(SELF) = NULL in
-    destroy
+destroy
 01:38 <@bacek> sorear, than answer is "yes"
-            */
+        */
 
-            if (PMC_data(p5i)) {
-                GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-                GET_ATTR_sv(interp, SELF, sv);
-                SvREFCNT_dec(sv);
-            }
-            mem_sys_free(PMC_data(SELF));
-            PMC_data(SELF) = NULL;
+        if (PMC_data(p5i)) {
+            GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+            GET_ATTR_sv(interp, SELF, sv);
+            SvREFCNT_dec(sv);
         }
     }
 

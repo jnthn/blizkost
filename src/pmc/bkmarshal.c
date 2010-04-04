@@ -125,7 +125,6 @@ PMC *
 blizkost_wrap_sv(PARROT_INTERP, PMC *p5i, SV *sv) {
     PMC *pmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                 string_from_literal(interp, "P5Scalar")));
-    PMC_data(pmc) = mem_allocate_zeroed_typed(Parrot_P5Scalar_attributes);
     PObj_custom_mark_SET(pmc);
     PObj_custom_destroy_SET(pmc);
 

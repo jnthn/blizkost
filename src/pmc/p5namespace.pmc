@@ -16,7 +16,7 @@ These are the vtable functions for the P5Namespace class.
 
 #include "blizkost.h"
 
-pmclass P5Namespace group blizkost_group dynpmc {
+pmclass P5Namespace group blizkost_group dynpmc auto_attrs {
     ATTR PMC    *p5i;
     ATTR STRING *ns_name;
 
@@ -35,31 +35,14 @@ Mark GC-ables.
 
 */
     VTABLE void mark() {
-        if (PMC_data(SELF)) {
-            PMC    *p5i;
-            STRING *name;
-            GET_ATTR_p5i(interp, SELF, p5i);
-            GET_ATTR_ns_name(interp, SELF, name);
-            if (p5i)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-            if (name)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
-        }
-    }
-
-
-/*
-
-=item C<void destroy()>
-
-Free underlying structure.
-
-=cut
-
-*/
-    VTABLE void destroy() {
-        if (PMC_data(SELF))
-            mem_sys_free(PMC_data(SELF));
+        PMC    *p5i;
+        STRING *name;
+        GET_ATTR_p5i(interp, SELF, p5i);
+        GET_ATTR_ns_name(interp, SELF, name);
+        if (p5i)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
+        if (name)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
     }
 
 /*

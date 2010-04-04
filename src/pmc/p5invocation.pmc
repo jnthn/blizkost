@@ -17,7 +17,7 @@ invocation model and calling conventions.
 
 #include "blizkost.h"
 
-pmclass P5Invocation group blizkost_group dynpmc {
+pmclass P5Invocation group blizkost_group dynpmc auto_attrs {
     ATTR PMC       *p5i;
     ATTR STRING    *name;
 
@@ -32,8 +32,6 @@ Set up P5Invocation PMC.
 */
 
     VTABLE void init() {
-        /* Set up the underlying structure. */
-        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Invocation_attributes);
         PObj_custom_mark_SET(SELF);
     }
 
@@ -47,16 +45,14 @@ Mark GC-ables.
 
 */
     VTABLE void mark() {
-        if (PMC_data(SELF)) {
-            PMC    *p5i;
-            STRING *name;
-            GET_ATTR_p5i(interp, SELF, p5i);
-            GET_ATTR_name(interp, SELF, name);
-            if (p5i)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-            if (name)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
-        }
+        PMC    *p5i;
+        STRING *name;
+        GET_ATTR_p5i(interp, SELF, p5i);
+        GET_ATTR_name(interp, SELF, name);
+        if (p5i)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
+        if (name)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
     }
 
 /*
