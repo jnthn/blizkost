@@ -34,28 +34,12 @@ These are the vtable functions for the P5Namespace class.
 
 pmclass P5Namespace group blizkost_group dynpmc {
     ATTR PMC    *p5i;
-    ATTR PMC    *marshall_cache;
     ATTR STRING *ns_name;
 
-/*
-
-=item C<void init()>
-
-Set up P5Namespace PMC.
-
-=cut
-
-*/
-
-    VTABLE void init_pmc(PMC *p5i) {
-        /* Set up the underlying structure. */
-        PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Namespace_attributes);
-        PObj_custom_mark_SET(SELF);
-        PObj_custom_destroy_SET(SELF);
-        SET_ATTR_p5i(interp, SELF, p5i);
-        SET_ATTR_marshall_cache(interp, SELF, PMCNULL);
+    VTABLE void init() {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_ILL_INHERIT,
+            "P5Namespace values can only be created through an interpreter");
     }
-
 
 /*
 
@@ -68,15 +52,12 @@ Mark GC-ables.
 */
     VTABLE void mark() {
         if (PMC_data(SELF)) {
-            PMC    *p5i, *cache;
+            PMC    *p5i;
             STRING *name;
             GET_ATTR_p5i(interp, SELF, p5i);
-            GET_ATTR_marshall_cache(interp, SELF, cache);
             GET_ATTR_ns_name(interp, SELF, name);
             if (p5i)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-            if (cache)
-                Parrot_gc_mark_PObj_alive(interp, (PObj*)cache);
             if (name)
                 Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
         }
@@ -95,20 +76,6 @@ Free underlying structure.
     VTABLE void destroy() {
         if (PMC_data(SELF))
             mem_sys_free(PMC_data(SELF));
-    }
-
-
-/*
-
-=item C<void set_string_native(STRING *name)>
-
-Set the name of the Perl 5 namespace that we map to.
-
-=cut
-
-*/
-    VTABLE void set_string_native(STRING *name) {
-        SET_ATTR_ns_name(interp, SELF, name);
     }
 
 /*

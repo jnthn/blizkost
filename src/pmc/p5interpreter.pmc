@@ -30,6 +30,7 @@ These are the vtable functions for the P5Interpreter class.
 
 /* Need to know a bit about other PMCs. */
 #include "pmc_p5scalar.h"
+#include "pmc_p5namespace.h"
 #include "bkmarshal.h"
 
 /* Tracking of whether we've initialized or not. */
@@ -159,6 +160,29 @@ Run the Perl 5 code.
         Parrot_pcc_build_call_from_c_args(interp, call_object, "P", result);
 
         return blizkost_return_from_invoke(interp, next);
+    }
+
+/*
+
+=item C<PMC *get_namespace(const char *name)>
+
+Acquire a namespace handle.
+
+=cut
+
+*/
+
+    METHOD PMC *get_namespace(STRING *name) {
+        PMC *pmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
+                    string_from_literal(interp, "P5Namespace")));
+        /* Set up the underlying structure. */
+        PMC_data(pmc) = mem_allocate_zeroed_typed(Parrot_P5Namespace_attributes);
+        PObj_custom_mark_SET(pmc);
+        PObj_custom_destroy_SET(pmc);
+        SETATTR_P5Namespace_p5i(interp, pmc, SELF);
+        SETATTR_P5Namespace_ns_name(interp, pmc, name);
+
+        return pmc;
     }
 }
 
