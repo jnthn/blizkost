@@ -15,7 +15,10 @@ These are the vtable functions for the P5Interpreter class.
 
 #include "blizkost.h"
 
+/* slightly evil */
+#define char const char
 #include "init_with_xs.h"
+#undef char
 
 /* Tracking of whether we've initialized or not. */
 static int inited = 0;
@@ -55,7 +58,9 @@ Set up P5Interpreter PMC.
 
     VTABLE void init() {
         struct interpreter *my_perl;
-        char *embedding[] = { "", "-e", "0" };
+        char embedding_s[][3] = { "", "-e", "0" };
+        char *embedding[] = { embedding_s[0], embedding_s[1],
+            embedding_s[2] };
 
         /* Set up the underlying structure. */
         PMC_data(SELF) = mem_allocate_zeroed_typed(Parrot_P5Interpreter_attributes);
@@ -64,9 +69,11 @@ Set up P5Interpreter PMC.
         /* Inited before? */
         if (!inited) {
             int   fake_argc   = 1;
-            char *fake_argv[] = { "" };
+            char *fake_argv[] = { embedding_s[0] };
             char *fake_env[]  = { NULL };
-            PERL_SYS_INIT3(&fake_argc, &fake_argv, &fake_env);
+            char **fake_argv_p = fake_argv;
+            char **fake_env_p  = fake_env;
+            PERL_SYS_INIT3(&fake_argc, &fake_argv_p, &fake_env_p);
             inited = 1;
         }
 
@@ -123,7 +130,7 @@ Run the Perl 5 code.
 
 */
 
-    VTABLE opcode_t *invoke(opcode_t *next) {
+    VTABLE opcode_t *invoke(void *next) {
         struct interpreter *my_perl;
         PMC    *result;
         STRING *source;
@@ -166,7 +173,7 @@ Acquire a namespace handle.
         SETATTR_P5Namespace_p5i(interp, pmc, SELF);
         SETATTR_P5Namespace_ns_name(interp, pmc, name);
 
-        return pmc;
+        RETURN(PMC *pmc);
     }
 }
 
