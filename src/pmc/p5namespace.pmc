@@ -14,23 +14,7 @@ These are the vtable functions for the P5Namespace class.
 
 */
 
-/* Various Perl 5 headers that we need. */
-#undef __attribute__
-#undef __attribute__noreturn__
-#undef __attribute__deprecated__
-#undef __attribute__pure__
-#undef __attribute__format__
-#undef __attribute__nonnull__
-#undef __attribute__warn_unused_result__
-#undef __attribute__unused__
-#define __attribute__(x) /* */
-#include <EXTERN.h>
-#include <perl.h>
-
-/* Plus need to know about some other PMCs. */
-#include "pmc_p5interpreter.h"
-#include "pmc_p5invocation.h"
-#include "pmc_p5scalar.h"
+#include "blizkost.h"
 
 pmclass P5Namespace group blizkost_group dynpmc {
     ATTR PMC    *p5i;

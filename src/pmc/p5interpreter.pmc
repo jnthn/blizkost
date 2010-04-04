@@ -13,25 +13,9 @@ These are the vtable functions for the P5Interpreter class.
 
 */
 
-/* Various Perl 5 headers plus XS initialization. */
-#undef __attribute__
-#undef __attribute__noreturn__
-#undef __attribute__deprecated__
+#include "blizkost.h"
 
-#undef __attribute__pure__
-#undef __attribute__format__
-#undef __attribute__nonnull__
-#undef __attribute__warn_unused_result__
-#undef __attribute__unused__
-
-
-#define __attribute__(x) /* */
 #include "init_with_xs.h"
-
-/* Need to know a bit about other PMCs. */
-#include "pmc_p5scalar.h"
-#include "pmc_p5namespace.h"
-#include "bkmarshal.h"
 
 /* Tracking of whether we've initialized or not. */
 static int inited = 0;

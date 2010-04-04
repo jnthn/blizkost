@@ -15,26 +15,7 @@ invocation model and calling conventions.
 
 */
 
-/* Various Perl 5 headers that we need. */
-#undef __attribute__
-#undef __attribute__noreturn__
-#undef __attribute__deprecated__
-#undef __attribute__pure__
-#undef __attribute__format__
-#undef __attribute__nonnull__
-#undef __attribute__warn_unused_result__
-#undef __attribute__unused__
-#define __attribute__(x) /* */
-#include <EXTERN.h>
-#include <perl.h>
-
-/* Plus need to know about the interpreter and scalar wrapper. */
-#include "pmc_p5interpreter.h"
-#include "pmc_p5scalar.h"
-#include "pmc_p5namespace.h"
-#include "parrot/oplib/ops.h"
-
-#include "bkmarshal.h"
+#include "blizkost.h"
 
 pmclass P5Invocation group blizkost_group dynpmc {
     ATTR PMC       *p5i;

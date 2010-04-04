@@ -12,26 +12,15 @@ src/pmc/p5marshal.c - wrap P5 and Parrot calling conventions
 
 */
 
-/* Various Perl 5 headers that we need. */
-#undef _
-#define PERL_NO_GET_CONTEXT
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
-
-/* Plus need to know about the interpreter and scalar wrapper. */
+/* Need to know about the interpreter and scalar wrapper. */
 #define PARROT_IN_EXTENSION
 #define CONST_STRING(i, s) Parrot_str_new_constant((i), s)
 #define CONST_STRING_GEN(i, s) Parrot_str_new_constant((i), s)
 #include "parrot/parrot.h"
 #include "parrot/extend.h"
 #include "parrot/dynext.h"
-#include "pmc_p5interpreter.h"
-#include "pmc_p5scalar.h"
-#include "pmc_p5namespace.h"
-#include "bkmarshal.h"
-#include "parrot/oplib/ops.h"
+
+#include "blizkost.h"
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL

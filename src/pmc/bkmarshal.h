@@ -4,7 +4,7 @@ $Id$
 
 =head1 NAME
 
-src/pmc/p5marshal.c - wrap P5 and Parrot calling conventions
+src/pmc/bkmarshal.h - wrap P5 and Parrot calling conventions
 
 =head1 DESCRIPTION
 
@@ -14,11 +14,6 @@ src/pmc/p5marshal.c - wrap P5 and Parrot calling conventions
 
 #ifndef BLIZKOST_MARSHAL_H_GUARD
 #define BLIZKOST_MARSHAL_H_GUARD
-
-/* Various Perl 5 headers that we need. */
-#undef _
-#include <EXTERN.h>
-#include <perl.h>
 
 PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
