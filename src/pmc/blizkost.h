@@ -49,6 +49,10 @@ does the necessary cruft to import both in the same file.
 #include <perl.h>
 #include <XSUB.h>
 
+/* The Perl definition of this runs foul of -Wnested-externs */
+#undef dNOOP
+#define dNOOP int /*@unused@*/ Perl___notused PERL_UNUSED_DECL
+
 #include "pmc_p5interpreter.h"
 #include "pmc_p5invocation.h"
 #include "pmc_p5namespace.h"
