@@ -10,13 +10,10 @@ use 5.008;
 
 my $pbc = 'perl5.pbc';
 
-my @tests = (<t/*.t>,<t/*/*.t>, <t/spec/*/*.t>);
-
 our %harness_args = (
     language  => 'blizkost',
     verbosity => 0,
     jobs      => $ENV{TEST_JOBS} || 1,
-    files     => \@tests,
     merge     => 0,
 );
 
@@ -26,12 +23,23 @@ GetOptions(
         # A sensible default is num_cores + 1.
         # Many people have two cores these days.
         'jobs:3'            => \$harness_args{jobs},
+        'nt'                => \my $nt,
 );
 
-if ($bindir) {
-    $harness_args{exec} = [$bindir.'/parrot', $pbc ];
+my @tests;
+
+if ($nt) {
+    $harness_args{files} = [ <nt/*.t> ];
+} else {
+    $harness_args{files} = [ <t/*.t>,<t/*/*.t>, <t/spec/*/*.t> ];
 }
-else {
+
+if ($nt) {
+    die "Need to provide --bindir together with --nt option" unless $bindir;
+    $harness_args{exec} = [$bindir . '/parrot-nqp'];
+} elsif ($bindir) {
+    $harness_args{exec} = [$bindir.'/parrot', $pbc ];
+} else {
     $harness_args{compiler} = $pbc;
 }
 
