@@ -1,6 +1,8 @@
 /*
 Copyright (C) 2009-2010, Jonathan Worthington and friends
-$Id$
+
+This file is distributed under the same terms as Parrot itself; see the
+file LICENSE in the source root for details.
 
 =head1 NAME
 

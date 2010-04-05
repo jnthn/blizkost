@@ -1,6 +1,9 @@
 /*
 Copyright (C) 2009, Jonathan Worthington and friends
 
+This file is distributed under the same terms as Parrot itself; see the
+file LICENSE in the source root for details.
+
 =head1 NAME
 
 src/pmc/p5interpreter.pmc - Embeds a Perl 5 interpreter
