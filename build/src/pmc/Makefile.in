@@ -56,7 +56,7 @@ PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
 OBJS = \
   lib-$(BLIZKOST_GROUP)$(O) \
   bkmarshal$(O) \
-  $(PMC_SOURCES:.pmc=$(O))
+  $(PMC_SOURCES:.pmc=@o@)
 
 CLEANUPS = \
   "*$(LOAD_EXT)" \
