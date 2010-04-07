@@ -125,11 +125,14 @@ PARROT_WARN_UNUSED_RESULT
 PARROT_CANNOT_RETURN_NULL
 PMC *
 blizkost_wrap_sv(PARROT_INTERP, PMC *p5i, SV *sv) {
+    PerlInterpreter *my_perl;
     PMC *pmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                 string_from_literal(interp, "P5Scalar")));
+
     PObj_custom_mark_SET(pmc);
     PObj_custom_destroy_SET(pmc);
 
+    GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
     SETATTR_P5Scalar_p5i(interp, pmc, p5i);
     SETATTR_P5Scalar_sv(interp, pmc, SvREFCNT_inc(sv));
     return pmc;
