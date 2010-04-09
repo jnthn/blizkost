@@ -95,6 +95,67 @@ Returns the string value of the SV.
         return Parrot_str_new(interp, perl5_str, strlen(perl5_str));
     }
 
+    VTABLE PMC *get_pmc_keyed(PMC *key) {
+        PerlInterpreter *my_perl;
+        PMC             *p5i, *elpmc;
+        SV              *sv, *rsv, *element;
+        svtype          type;
+        PMC             *nextkey = key_next(interp, key);
+
+        GET_ATTR_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GET_ATTR_sv(interp, SELF, sv);
+
+        SvGETMAGIC(sv);
+
+        if (!SvROK(sv))
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "non-reference value used as aggregate");
+
+        /* XXX handle overloading
+           problem: we don't necessarily know whether to use @{} or %{}
+           Austin suggests using whichever is overloaded, else @{} */
+        rsv = SvRV(sv);
+        type = SvTYPE(rsv);
+
+        if (type == SVt_PVHV) {
+            HE *hashent;
+            SV *svkey;
+            STRING *strkey = VTABLE_get_string(interp, key);
+            /* XXX this is wrong.  UTF8, embedded nuls */
+            char *ckey = Parrot_str_to_cstring(interp, strkey);
+            ENTER;
+            SAVETMPS;
+            svkey = sv_2mortal(newSVpv(ckey, 0));
+            mem_sys_free(ckey);
+            hashent = hv_fetch_ent((HV*)rsv, svkey, 0, 0);
+            element = hashent ? SvREFCNT_inc(HeVAL(hashent)) : NULL;
+            FREETMPS;
+            LEAVE;
+        } else {
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "non-hash reference used as aggregate");
+        }
+
+        if (element)
+            elpmc = blizkost_wrap_sv(interp, p5i, element);
+        else
+            elpmc = PMCNULL;
+
+        SvREFCNT_dec(element);
+
+        if (nextkey) {
+            if (PMC_IS_NULL(elpmc))
+                elpmc = Parrot_pmc_new(interp, enum_class_Undef);
+            return VTABLE_get_pmc_keyed(interp, elpmc, nextkey);
+        } else {
+            return elpmc;
+        }
+    }
+
+
 /*
 
 =item C<PMC *find_method(STRING *name)>
