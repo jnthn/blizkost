@@ -124,8 +124,6 @@ help:
 
 test: build
 	$(PERL) -I$(LIB_DIR)/tools/lib t/harness --bindir=$(BIN_DIR)
-
-nt: build
 	$(PERL) -I$(LIB_DIR)/tools/lib t/harness --bindir=$(BIN_DIR) --nt
 
 # basic run for missing libs
