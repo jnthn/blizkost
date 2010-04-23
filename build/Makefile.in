@@ -41,7 +41,8 @@ PMC_DEPS = \
   $(PMC_DIR)/p5sv.pmc \
   $(PMC_DIR)/p5interpreter.pmc \
   $(PMC_DIR)/p5namespace.pmc \
-  $(PMC_DIR)/p5scalar.pmc
+  $(PMC_DIR)/p5scalar.pmc \
+  $(PMC_DIR)/p5hashiter.pmc
 
 SOURCES = \
   perl5.pir

@@ -1,0 +1,99 @@
+/*
+Copyright (C) 2009, Jonathan Worthington and friends
+
+This file is distributed under the same terms as Parrot itself; see the
+file LICENSE in the source root for details.
+
+=head1 NAME
+
+src/pmc/p5hashiter.pmc - Perl 5 hash iterator
+
+=head1 DESCRIPTION
+
+This PMC wraps the Perl 5 hv_iter interface to provide an iterator object
+interface.  Note that the serial iterations rule is still present.
+
+=cut
+
+*/
+
+#include "blizkost.h"
+
+HE blizkost_EMPTY; /*semipredicate*/
+
+static HE *
+force_current_he(PARROT_INTERP, PMC *hiter) {
+    HE              *current_he;
+    PMC             *hash, *p5i;
+    HV              *hashsv;
+    PerlInterpreter *my_perl;
+
+    GETATTR_P5HashIter_current_he(interp, hiter, current_he);
+
+    if (current_he != &blizkost_EMPTY) {
+        return current_he;
+    }
+
+    GETATTR_P5HashIter_backing_hash(interp, hiter, hash);
+    GETATTR_P5SV_p5i(interp, hash, p5i);
+    GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+    GETATTR_P5SV_sv(interp, hash, hashsv);
+
+    current_he = hv_iternext(hashsv);
+
+    SETATTR_P5HashIter_current_he(interp, hiter, current_he);
+
+    return current_he;
+}
+
+/* extends Iterator - TT#1578 */
+pmclass P5HashIter no_ro group blizkost_group dynpmc auto_attrs {
+    ATTR PMC        *backing_hash;
+    /* FIXME This encapsulation break sucks, but it's not trivially fixable
+       because pmc2c puts the attribute declarations into a header where
+       they are divorced from the local referencing environment, causing
+       errors down the line if we use the typedef. */
+    ATTR struct he  *current_he;
+
+/*
+
+=item C<void mark()>
+
+Mark GC-ables.
+
+=cut
+
+*/
+    VTABLE void mark() {
+        PMC    *backing_hash;
+        GET_ATTR_backing_hash(interp, SELF, backing_hash);
+        if (backing_hash)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)backing_hash);
+    }
+
+    VTABLE INTVAL get_bool() {
+        return force_current_he(INTERP, SELF) != NULL;
+    }
+
+    VTABLE PMC *shift_pmc() {
+        HE      *current_he = force_current_he(INTERP, SELF);
+        SV      *keysv;
+        PMC     *p5i, *hash;
+        PerlInterpreter *my_perl;
+
+        if (current_he == NULL) {
+            Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
+                "StopIteration");
+        }
+
+        SET_ATTR_current_he(INTERP, SELF, &blizkost_EMPTY);
+
+        GET_ATTR_backing_hash(INTERP, SELF, hash);
+        GETATTR_P5SV_p5i(INTERP, hash, p5i);
+        GETATTR_P5Interpreter_my_perl(INTERP, p5i, my_perl);
+
+        keysv = hv_iterkeysv(current_he);
+
+        return blizkost_wrap_sv(INTERP, p5i, keysv);
+    }
+}

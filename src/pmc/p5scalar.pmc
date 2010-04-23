@@ -155,6 +155,55 @@ Returns the string value of the SV.
         }
     }
 
+    VTABLE PMC *get_iter() {
+        PerlInterpreter *my_perl;
+        PMC             *p5i, *elpmc;
+        SV              *sv, *rsv, *element;
+        svtype          type;
+
+        GET_ATTR_p5i(interp, SELF, p5i);
+        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
+        GET_ATTR_sv(interp, SELF, sv);
+
+        ENTER;
+        SAVETMPS;
+
+        SvGETMAGIC(sv);
+
+        if (!SvROK(sv))
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "non-reference value used as aggregate");
+
+        /* XXX handle overloading
+           problem: we don't necessarily know whether to use @{} or %{}
+           Austin suggests using whichever is overloaded, else @{} */
+        rsv = SvRV(sv);
+        type = SvTYPE(rsv);
+
+        if (type == SVt_PVHV) {
+            PMC *iter = Parrot_pmc_new_noinit(interp, pmc_type(interp,
+                    string_from_literal(interp, "P5HashIter")));
+
+            hv_iterinit((HV*) rsv);
+
+            PObj_custom_mark_SET(iter);
+            /* XXX this is a cheat */
+            SETATTR_P5HashIter_backing_hash(interp, iter,
+                    blizkost_wrap_sv(interp, p5i, (SV*)rsv));
+            SETATTR_P5HashIter_current_he(interp, iter, &blizkost_EMPTY);
+
+            FREETMPS;
+            LEAVE;
+            return iter;
+        } else {
+            FREETMPS;
+            LEAVE;
+            Parrot_ex_throw_from_c_args(interp, NULL,
+                    EXCEPTION_INVALID_OPERATION,
+                    "non-hash reference used as aggregate");
+        }
+    }
 
 /*
 
@@ -199,6 +248,7 @@ Attempts to invoke the target of a code reference.
 
         PMC *ctx         = CURRENT_CONTEXT(interp);
         PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
+        PMC *ret_object;
 
         GET_ATTR_p5i(interp, SELF, p5i);
         GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
@@ -210,7 +260,8 @@ Attempts to invoke the target of a code reference.
         blizkost_call_in(interp, p5i, invref, G_ARRAY, positional, named,
                 &results);
 
-        Parrot_pcc_build_call_from_c_args(interp, call_object, "Pf", results);
+        ret_object = Parrot_pcc_build_call_from_c_args(interp, call_object,
+                "Pf", results);
 
         return blizkost_return_from_invoke(interp, next);
     }

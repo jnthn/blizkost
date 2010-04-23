@@ -47,6 +47,7 @@ PMC_SOURCES = \
   p5sv.pmc \
   p5interpreter.pmc \
   p5scalar.pmc \
+  p5hashiter.pmc \
   p5namespace.pmc \
   p5invocation.pmc
 
@@ -93,6 +94,7 @@ compile: generate
 	$(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
 	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c
 	$(CC) $(CC_OUT)p5invocation$(O) $(INCLUDES) $(CFLAGS) p5invocation.c
+	$(CC) $(CC_OUT)p5hashiter$(O) $(INCLUDES) $(CFLAGS) p5hashiter.c
 	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
 	$(CC) $(CC_OUT)bkmarshal$(O) $(INCLUDES) $(CFLAGS) bkmarshal.c
 
