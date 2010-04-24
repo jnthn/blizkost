@@ -2,13 +2,13 @@
 # (actually NQP; the real Perl6 version will be much neater)
 
 pir::load_bytecode('perl5.pbc');
-my $comp := pir::compreg__PS('perl5');
+my $comp := pir::compreg__ps('perl5');
 
 my $mod  := $comp.load_module('Tk');
 
 my %exp  := $comp.get_exports($mod);
 
-my $mw := %exp<sub><&MainWindow>().new;
+my $mw := $comp.eval("'MainWindow'").new;
 
 $mw.Label('-text', 'Hello, world!').pack;
 
@@ -18,4 +18,4 @@ $mw.Button(
     '-command', sub (*@_) { exit },
 ).pack;
 
-
+%exp<sub><MainLoop>();
