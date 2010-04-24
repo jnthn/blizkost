@@ -52,23 +52,8 @@ unless (%config) {
 }
 
 #  Create the Makefile using the information we just got
-create_makefiles(%config);
-
-#  Parrot's makefile tool doesn't give us an easy way to shove in more
-#  values, so for now we'll just screw with the makefile after Parrot's
-#  tool has generated it. If this bothers you, patches welcome.
-open(my $fh, '< src/pmc/Makefile') || die "Could not open src/pmc/Makefile: $!";
-my $mf = join('', <$fh>);
-close $fh;
-open($fh, '> src/pmc/Makefile') || die "Could not open src/pmc/Makefile: $!";
-print $fh <<MAKEFILE;
-# Perl 5 configuration bits.
-P5_ARCHLIB = $Config{'archlib'}
-P5_LIBPERL = $Config{'libperl'}
-
-MAKEFILE
-print $fh $mf;
-close $fh;
+create_makefile('Makefile' => %config);
+create_makefile('src/pmc/Makefile' => %config);
 
 sub read_parrot_config {
     my @parrot_config_exe = @_;
@@ -87,25 +72,39 @@ sub read_parrot_config {
     %config;
 }
 
+#  Generate a Makefile from a configuration
+sub create_makefile {
+    my ($name, %config) = @_;
 
-#  Generate Makefiles from a configuration
-sub create_makefiles {
-    my %config = @_;
-    my %makefiles = (
-        'build/Makefile.in'         => 'Makefile',
-        'build/src/pmc/Makefile.in' => 'src/pmc/Makefile'
-    );
-    my $build_tool = $config{libdir} . $config{versiondir}
-                   . '/tools/dev/gen_makefile.pl';
+    my $maketext = slurp( "build/$name.in" );
 
-    die "Build tool $build_tool not found\nThis usually means that you need to do a 'make install-dev' in your parrot source code directory." unless -e $build_tool;
-
-print "$build_tool\n";
-    foreach my $template (keys %makefiles) {
-        my $makefile = $makefiles{$template};
-        print "Creating $makefile\n";
-        system($config{perl}, $build_tool, $template, $makefile);
+    $config{'win32_libparrot_copy'} = $^O eq 'MSWin32' ? 'copy $(PARROT_BIN_DIR)\libparrot.dll .' : '';
+    $maketext =~ s/@(\w+)@/$config{$1}/g;
+    if ($^O eq 'MSWin32') {
+        $maketext =~ s{/}{\\}g;
+        $maketext =~ s{\\\*}{\\\\*}g;
+        $maketext =~ s{http:\S+}{ do {my $t = $&; $t =~ s'\\'/'g; $t} }eg;
     }
+
+    my $outfile = $name;
+    print "\nCreating $outfile ...\n";
+    open(my $MAKEOUT, '>', $outfile) ||
+        die "Unable to write $outfile\n";
+    print {$MAKEOUT} $maketext;
+    close $MAKEOUT or die $!;
+
+    return;
+}
+
+sub slurp {
+    my $filename = shift;
+
+    open my $fh, '<', $filename or die "Unable to read $filename\n";
+    local $/ = undef;
+    my $maketext = <$fh>;
+    close $fh or die $!;
+
+    return $maketext;
 }
 
 print <<BYE;
