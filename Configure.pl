@@ -21,6 +21,8 @@ use Config;
 
 use Getopt::Long qw(:config auto_help);
 
+use ExtUtils::Embed;
+
 our ( $opt_parrot_config, $opt_gen_parrot);
 GetOptions( 'parrot-config=s', 'gen-parrot' );
 
@@ -51,6 +53,10 @@ unless (%config) {
         ."Please give me the path to it with the --parrot-config=... option.";
 }
 
+$config{p5_ldopts} = ldopts(1);
+$config{p5_ccopts} = ccopts(1);
+$config{p5_perl} = $^X;
+
 #  Create the Makefile using the information we just got
 create_makefile('Makefile' => %config);
 create_makefile('src/pmc/Makefile' => %config);
@@ -79,7 +85,8 @@ sub create_makefile {
     my $maketext = slurp( "build/$name.in" );
 
     $config{'win32_libparrot_copy'} = $^O eq 'MSWin32' ? 'copy $(PARROT_BIN_DIR)\libparrot.dll .' : '';
-    $maketext =~ s/@(\w+)@/$config{$1}/g;
+    $maketext =~ s{#IF\((\w+)\):(.*\n)}{$config{osname} eq $1 ? $2 : ""}eg;
+    $maketext =~ s/@(\w+)@/exists $config{$1} ? $config{$1} : die("No such config var $1")/eg;
     if ($^O eq 'MSWin32') {
         $maketext =~ s{/}{\\}g;
         $maketext =~ s{\\\*}{\\\\*}g;

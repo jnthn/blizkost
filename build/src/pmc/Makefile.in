@@ -10,15 +10,12 @@ STAGING_DIR   = ../../dynext
 #INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
 INSTALL_DIR   = $(LIB_DIR)/dynext
 
-EMBLFLAGS := $(shell perl -MExtUtils::Embed -e ldopts)
-EMBCFLAGS := $(shell perl -MExtUtils::Embed -e ccopts)
-
 # Set up extensions
 LOAD_EXT      = @load_ext@
 O             = @o@
 
 # Setup some commands
-PERL          = @perl@
+PERL          = @p5_perl@
 RM_F          = @rm_f@
 MKPATH        = @mkpath@
 CHMOD         = @chmod@
@@ -27,7 +24,7 @@ CC            = @cc@ -c
 LD            = @ld@
 LDFLAGS       = @ldflags@ @ld_debug@ @libs@
 LD_LOAD_FLAGS = @ld_load_flags@
-CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ $(EMBCFLAGS)
+CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ @p5_ccopts@
 CC_OUT        = @cc_o_out@
 LD_OUT        = @ld_out@
 LIBPARROT     = @inst_libparrot_ldflags@
@@ -38,7 +35,7 @@ PMC2CD          = $(PMC2C) --dump $(PMC2C_INCLUDES)
 PMC2CC          = $(PMC2C) -c $(PMC2C_INCLUDES)
 
 INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
-LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) $(EMBLFLAGS)
+LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) @p5_ldopts@
 
 BLIZKOST_GROUP = blizkost_group
 

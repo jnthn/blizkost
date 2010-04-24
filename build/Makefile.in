@@ -20,7 +20,7 @@ PMC_DIR       = src/pmc
 
 ## Setup some commands
 MAKE          = @make_c@
-PERL          = @perl@
+PERL          = @p5_perl@
 CAT           = @cat@
 CHMOD         = @chmod@
 CP            = @cp@
