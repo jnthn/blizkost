@@ -25,7 +25,7 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
     $P1 = loadlib 'blizkost_group', $P0
     load_bytecode 'PCT.pbc'
 
-    $P2 = split ' ', '$!interp $!requirer'
+    $P2 = split ' ', '$!interp $!requirer $!export-lister'
 
     $P0 = get_root_global ['parrot'], 'P6metaclass'
     $P1 = $P0.'new_class'('Perl5::Compiler', 'parent'=>'PCT::HLLCompiler', 'attr'=>$P2)
@@ -53,15 +53,74 @@ to the blizkost compiler.
 # We maintain one P5Interpreter (Perl heap) per Parrot heap (compreg object),
 # to avoid suprising duplication.  TODO: locking.
 .sub '!force' :method
-    .local pmc p5i, requirer
+    .local pmc p5i, requirer, exportlister, support
     p5i = getattribute self, "$!interp"
     unless null p5i goto have_interp
 
     p5i = new 'P5Interpreter'
     setattribute self, "$!interp", p5i
 
-    requirer = p5i('sub { my ($n) = @_; $n =~ s|::|/|g; $n .= ".pm"; require $n }')
+    # unfortunately, the Perl 5 C API only allows making evals in scalar context
+    support = p5i(<<"End_Init_Code")
+my $req = sub {
+    my ($module_name) = @_;
+    # Yes, this is portable.
+    $module_name =~ s|::|/|g;
+    $module_name .= ".pm";
+    require $module_name;
+};
+
+my $explist = sub {
+    my ($module_name, @tags) = @_;
+    # should already be loaded
+    my @output;
+
+    my %sigils = (SCALAR => '$', ARRAY => '@', HASH => '%', IO => '*');
+
+    %Blizkost::ImportZone:: = ();
+    {
+        package Blizkost::ImportZone;
+        $module_name->import(@tags);
+    }
+
+    for my $name (keys %Blizkost::ImportZone::) {
+        my $gref = \$Blizkost::ImportZone::{$name};
+
+        my %things;
+
+        for my $type (qw/SCALAR ARRAY HASH IO/) {
+            my $ref = *{$gref}{$type};
+            next unless defined $ref;
+
+            $things{$type} = $ref;
+        }
+
+        if (keys %things > 1) {
+            for my $used_type (keys %things) {
+                push @output, 'var', ($sigils{$used_type} . $name),
+                        $things{$used_type};
+            }
+        } elsif (keys %things == 1) {
+            my $used_type = (keys %things)[0];
+            push @output, 'var', $name, $things{$used_type};
+        }
+
+        if (defined *{$gref}{CODE}) {
+            push @output, 'sub', $name, *{$gref}{CODE};
+        }
+    }
+
+    return @output;
+};
+
+{ requirer => $req, exportlister => $explist };
+End_Init_Code
+
+    requirer = support["requirer"]
+    exportlister = support["exportlister"]
+
     setattribute self, "$!requirer", requirer
+    setattribute self, "$!export-lister", exportlister
 
   have_interp:
 .end
@@ -128,6 +187,40 @@ Implements the PDD-31 library loading interface.
     .param pmc name_str
 
     .return (name_str)
+.end
+
+.sub 'get_exports' :method
+    .param pmc module_name
+    .param pmc imports :slurpy
+
+    self.'!force'()
+
+    .local pmc expiter, expout
+
+    $P0 = getattribute self, '$!export-lister'
+    ($P0 :slurpy) = $P0(module_name, imports :flat)
+    expiter = iter $P0
+
+    expout = new 'Hash'
+    $P0 = new 'Hash'
+    expout["sub"] = $P0
+    $P0 = new 'Hash'
+    expout["var"] = $P0
+
+  again:
+    unless expiter, the_end
+
+    $P1 = shift expiter
+    $P0 = expout[$P1]
+
+    $P1 = shift expiter
+    $P2 = shift expiter
+    $P0[$P1] = $P2
+
+    goto again
+
+  the_end:
+    .return(expout)
 .end
 
 =back
