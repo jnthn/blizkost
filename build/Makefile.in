@@ -19,7 +19,7 @@ PCT           = $(LIB_DIR)/library/PCT.pbc
 PMC_DIR       = src/pmc
 
 ## Setup some commands
-MAKE          = @make_c@
+MAKE          = @make@
 PERL          = @p5_perl@
 CAT           = @cat@
 CHMOD         = @chmod@
@@ -80,7 +80,7 @@ blizkost@exe@: perl5.pbc
 #IF(win32):	copy $(BIN_DIR)\libparrot.dll .
 
 $(BLIZKOST_GROUP): $(PMC_DEPS)
-	$(MAKE) $(PMC_DIR)
+	$(MAKE) -f $(PMC_DIR)/Makefile pmc_all
 
 
 src/gen_builtins.pir: build/gen_builtins_pir.pl
@@ -132,7 +132,7 @@ test-installable: installable
 	echo "1" | ./installable_blizkost@exe@
 
 install: installable
-	$(MAKE) $(PMC_DIR) install
+	$(MAKE) -f $(PMC_DIR)/Makefile pmc_install
 	$(CP) installable_blizkost@exe@ $(BIN_DIR)/parrot-blizkost@exe@
 	$(CHMOD) 0755 $(BIN_DIR)/parrot-blizkost@exe@
 	-$(MKPATH) $(LIB_DIR)/languages/perl5
@@ -142,7 +142,7 @@ install: installable
 	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
 
 uninstall:
-	$(MAKE) $(PMC_DIR) uninstall
+	$(MAKE) -f $(PMC_DIR)/Makefile pmc_uninstall
 	$(RM_F) $(BIN_DIR)/parrot-blizkost@exe@
 	$(RM_RF) $(LIB_DIR)/languages/perl5
 	$(RM_F) $(MANDIR)/man1/parrot-blizkost.1
@@ -162,11 +162,11 @@ testclean:
 	$(RM_F) $(TEST_CLEANUPS)
 
 clean:
-	$(MAKE) $(PMC_DIR) clean
+	$(MAKE) -f $(PMC_DIR)/Makefile pmc_clean
 	$(RM_F) $(TEST_CLEANUPS) $(BUILD_CLEANUPS)
 
 realclean:
-	$(MAKE) $(PMC_DIR) realclean
+	$(MAKE) -f $(PMC_DIR)/Makefile pmc_realclean
 	$(RM_F) $(TEST_CLEANUPS) $(BUILD_CLEANUPS) Makefile
 
 distclean: realclean

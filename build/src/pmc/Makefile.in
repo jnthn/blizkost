@@ -6,7 +6,7 @@ INCLUDE_DIR   = @includedir@$(VERSION_DIR)
 LIB_DIR       = @libdir@$(VERSION_DIR)
 SRC_DIR       = @srcdir@$(VERSION_DIR)
 TOOLS_DIR     = @libdir@$(VERSION_DIR)/tools/lib
-STAGING_DIR   = ../../dynext
+STAGING_DIR   = dynext
 #INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
 INSTALL_DIR   = $(LIB_DIR)/dynext
 
@@ -37,42 +37,41 @@ PMC2CC          = $(PMC2C) -c $(PMC2C_INCLUDES)
 INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
 LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) @p5_ldopts@
 
-BLIZKOST_GROUP = blizkost_group
+PMC_BLIZKOST_GROUP = blizkost_group
 
 PMC_SOURCES = \
-  p5sv.pmc \
-  p5interpreter.pmc \
-  p5scalar.pmc \
-  p5hashiter.pmc \
-  p5namespace.pmc \
-  p5invocation.pmc
+  src/pmc/p5sv.pmc \
+  src/pmc/p5interpreter.pmc \
+  src/pmc/p5scalar.pmc \
+  src/pmc/p5hashiter.pmc \
+  src/pmc/p5namespace.pmc \
+  src/pmc/p5invocation.pmc
 
 PMC_C = $(PMC_SOURCES:.pmc=.c)
 PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
 
 OBJS = \
-  lib-$(BLIZKOST_GROUP)$(O) \
-  bkmarshal$(O) \
+  src/pmc/lib-$(PMC_BLIZKOST_GROUP)$(O) \
+  src/pmc/bkmarshal$(O) \
   $(PMC_SOURCES:.pmc=@o@)
 
 CLEANUPS = \
-  "*$(LOAD_EXT)" \
-  "*$(O)" \
-  "p5*.c" \
-  "pmc*.h" \
-  "*.dump" \
-#IF(win32):  "*.exp" \
-#IF(win32):  "*.ilk" \
-#IF(win32):  "*.manifext" \
-#IF(win32):  "*.pdb" \
-#IF(win32):  "*.lib" \
-  $(STAGING_DIR)/$(BLIZKOST_GROUP)$(LOAD_EXT)
+  "src/pmc/*$(LOAD_EXT)" \
+  "src/pmc/*$(O)" \
+  "src/pmc/p5*.c" \
+  "src/pmc/pmc*.h" \
+  "src/pmc/*.dump" \
+#IF(win32):  "src/pmc/*.exp" \
+#IF(win32):  "src/pmc/*.ilk" \
+#IF(win32):  "src/pmc/*.manifext" \
+#IF(win32):  "src/pmc/*.pdb" \
+#IF(win32):  "src/pmc/*.lib" \
+  $(STAGING_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
 
+pmc_all: pmc_staging
 
-all: staging
-
-init_with_xs.h:
-	$(PERL) -MExtUtils::Embed -e xsinit -- -o init_with_xs.h
+src/pmc/init_with_xs.h:
+	$(PERL) -MExtUtils::Embed -e xsinit -- -o src/pmc/init_with_xs.h
 
 .SUFFIXES : .pmc .dump
 
@@ -81,42 +80,44 @@ init_with_xs.h:
 .pmc.c:
 	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $<
 
-generate: init_with_xs.h $(PMC_SOURCES) $(PMC_DUMP) $(PMC_C)
-	$(PMC2C) --no-lines --library $(BLIZKOST_GROUP) -c $(PMC_SOURCES)
+pmc_generate: src/pmc/init_with_xs.h $(PMC_SOURCES) $(PMC_DUMP) $(PMC_C)
+	$(PMC2C) --no-lines --library $(PMC_BLIZKOST_GROUP) -c $(PMC_SOURCES)
 
-compile: generate
-	$(CC) $(CC_OUT)p5sv$(O)  $(INCLUDES) $(CFLAGS) p5sv.c
-	$(CC) $(CC_OUT)p5scalar$(O)  $(INCLUDES) $(CFLAGS) p5scalar.c
-	$(CC) $(CC_OUT)p5namespace$(O)  $(INCLUDES) $(CFLAGS) p5namespace.c
-	$(CC) $(CC_OUT)p5interpreter$(O) $(INCLUDES) $(CFLAGS) p5interpreter.c
-	$(CC) $(CC_OUT)p5invocation$(O) $(INCLUDES) $(CFLAGS) p5invocation.c
-	$(CC) $(CC_OUT)p5hashiter$(O) $(INCLUDES) $(CFLAGS) p5hashiter.c
-	$(CC) $(CC_OUT)lib-$(BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) $(BLIZKOST_GROUP).c
-	$(CC) $(CC_OUT)bkmarshal$(O) $(INCLUDES) $(CFLAGS) bkmarshal.c
+pmc_compile: pmc_generate
+	$(CC) $(CC_OUT)src/pmc/p5sv$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5sv.c
+	$(CC) $(CC_OUT)src/pmc/p5scalar$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5scalar.c
+	$(CC) $(CC_OUT)src/pmc/p5namespace$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5namespace.c
+	$(CC) $(CC_OUT)src/pmc/p5interpreter$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5interpreter.c
+	$(CC) $(CC_OUT)src/pmc/p5invocation$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5invocation.c
+	$(CC) $(CC_OUT)src/pmc/p5hashiter$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5hashiter.c
+	$(CC) $(CC_OUT)src/pmc/lib-$(PMC_BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) src/pmc/$(PMC_BLIZKOST_GROUP).c
+	$(CC) $(CC_OUT)src/pmc/bkmarshal$(O) $(INCLUDES) $(CFLAGS) src/pmc/bkmarshal.c
 
-linklibs: compile
-	$(LD) $(LD_OUT)$(BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)
+pmc_linklibs: pmc_compile
+	$(LD) $(LD_OUT)src/pmc/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)
 
-staging: linklibs
-#IF(cygwin or hpux):	CHMOD 0775 "*$(LOAD_EXT)"
-	$(CP) "*$(LOAD_EXT)" $(STAGING_DIR)
+pmc_staging: pmc_linklibs
+#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+	$(CP) "src/pmc/*$(LOAD_EXT)" $(STAGING_DIR)
 
-install:
-#IF(cygwin or hpux):	CHMOD 0775 "*$(LOAD_EXT)"
+pmc_install:
+#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
 	$(MKPATH) $(INSTALL_DIR)
-	$(CP) "*$(LOAD_EXT)" $(INSTALL_DIR)
+	$(CP) "src/pmc/*$(LOAD_EXT)" $(INSTALL_DIR)
 
-uninstall:
-	$(RM_F) $(INSTALL_DIR)/$(BLIZKOST_GROUP)$(LOAD_EXT)
+pmc_uninstall:
+	$(RM_F) $(INSTALL_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
 
-Makefile: ../../build/src/pmc/Makefile.in
-	cd ../.. && $(PERL) Configure.pl
+src/pmc/Makefile: build/src/pmc/Makefile.in
+	$(PERL) Configure.pl
 
-clean:
+pmc_clean:
 	$(RM_F) $(CLEANUPS)
 
-realclean:
-	$(RM_F) $(CLEANUPS) Makefile
+pmc_realclean:
+	$(RM_F) $(CLEANUPS) src/pmc/Makefile
 
 # Local variables:
 #   mode: makefile
