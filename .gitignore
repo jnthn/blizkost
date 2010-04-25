@@ -2,6 +2,7 @@ Makefile
 
 *.pbc
 p5*.c
+perl5.c
 *.exe
 *.o
 *.obj
