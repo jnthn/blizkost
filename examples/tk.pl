@@ -19,7 +19,7 @@ $mw.Label('-text', 'Hello, world!').pack;
 # NQP doesn't support named args starting with a dash
 $mw.Button(
     '-text',    'Quit',
-    '-command', sub (*@_) { exit },
+    '-command', sub (*@_) { pir::exit(0) },
 ).pack;
 
 &MainLoop();
