@@ -14,9 +14,11 @@ Configure.pl - a configure script for Blizkost
 
 =cut
 
+# Ideally we'd support back further, but fixing the macro framework back
+# in time is not a priority
+use 5.010;
 use strict;
 use warnings;
-use 5.008;
 use Config;
 
 use Getopt::Long qw(:config auto_help);
