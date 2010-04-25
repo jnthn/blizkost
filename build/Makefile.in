@@ -214,19 +214,18 @@ $(PMC_DIR)/init_with_xs.h:
 
 .SUFFIXES : .pmc .dump $(O)
 
-.pmc.dump:
+# We always write .c as a proxy for the other files...
+
+.pmc.c:
 	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $<
-# note that the pmc will always be older than the dump, as the dump will
-# be remade if needed first
-.dump.c:
-	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $*.pmc
+	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $<
 .c$(O):
 	$(CC) $(CC_OUT)$@ $(INCLUDES) $(CFLAGS) $<
 
-$(PMC_DIR)/$(PMC_BLIZKOST_GROUP).c: $(PMC_SOURCES:.pmc=.dump)
+$(PMC_DIR)/$(PMC_BLIZKOST_GROUP).c: $(PMC_SOURCES:.pmc=.c)
 	$(PMC2C) --no-lines --library $(PMC_DIR)/$(PMC_BLIZKOST_GROUP) -c $(PMC_SOURCES)
 
-$(PMC_DIR)/p5scalar.dump: $(PMC_DIR)/p5sv.dump
+$(PMC_DIR)/p5scalar.c: $(PMC_DIR)/p5sv.c
 
 $(OBJS): $(HEADERS)
 
