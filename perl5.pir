@@ -189,6 +189,17 @@ Implements the PDD-31 library loading interface.
     .return (name_str)
 .end
 
+.sub 'get_namespace' :method
+    .param pmc name
+
+    self.'!force'()
+
+    $P0 = getattribute self, '$!interp'
+    $P0 = $P0.'get_namespace'(name)
+
+    .return($P0)
+.end
+
 .sub 'get_exports' :method
     .param pmc module_name
     .param pmc imports :slurpy
