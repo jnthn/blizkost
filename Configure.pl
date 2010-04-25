@@ -59,7 +59,6 @@ $config{p5_perl} = $^X;
 
 #  Create the Makefile using the information we just got
 create_makefile('Makefile' => %config);
-create_makefile('src/pmc/Makefile' => %config);
 
 sub read_parrot_config {
     my @parrot_config_exe = @_;
