@@ -55,15 +55,15 @@ DOCS = README
 
 BUILD_CLEANUPS = \
   perl5.pbc \
-  "*.c" \
-  "*$(O)" \
+  *.c \
+  *$(O) \
   blizkost@exe@ \
 #IF(win32):  parrot-blizkost.exe \
 #IF(win32):  parrot-blizkost.iss \
-#IF(win32):  "setup-parrot-*.exe" \
+#IF(win32):  setup-parrot-*.exe \
   installable_blizkost@exe@
 
-TEST_CLEANUPS =
+TEST_CLEANUPS = core t/core
 
 BLIZKOST_GROUP = $(STAGING_DIR)/blizkost_group$(LOAD_EXT)
 
@@ -94,16 +94,14 @@ HEADERS = \
   $(PMC_SOURCES:.pmc=.c)
 
 CLEANUPS = \
-  "$(OBJS)" \
-  "$(PMC_SOURCES:.pmc=.c)" \
-  "src/pmc/pmc*.h" \
-  "$(PMC_SOURCES:.pmc=.dump)" \
-#IF(win32):  "src/pmc/*.exp" \
-#IF(win32):  "src/pmc/*.ilk" \
-#IF(win32):  "src/pmc/*.manifext" \
-#IF(win32):  "src/pmc/*.pdb" \
-#IF(win32):  "src/pmc/*.lib" \
-  $(BLIZKOST_GROUP)
+  $(OBJS) $(PMC_C) $(PMC_DUMP) src/pmc/pmc*.h \
+#IF(win32):  src/pmc/*.exp \
+#IF(win32):  src/pmc/*.ilk \
+#IF(win32):  src/pmc/*.manifext \
+#IF(win32):  src/pmc/*.pdb \
+#IF(win32):  src/pmc/*.lib \
+  $(BLIZKOST_GROUP) $(PMC_DIR)/$(PMC_BLIZKOST_GROUP).c \
+  $(PMC_DIR)/$(PMC_BLIZKOST_GROUP).h $(PMC_DIR)/init_with_xs.h
 
 # the default target
 build: \
