@@ -33,15 +33,6 @@ PBC_TO_EXE    = $(BIN_DIR)/pbc_to_exe@exe@
 #IF(darwin):# MACOSX_DEPLOYMENT_TARGET must be defined for OS X compilation/linking
 #IF(darwin):export MACOSX_DEPLOYMENT_TARGET = @osx_version@
 
-BLIZKOST_GROUP = $(PMC_DIR)/blizkost_group$(LOAD_EXT)
-
-PMC_DEPS = \
-  $(PMC_DIR)/p5sv.pmc \
-  $(PMC_DIR)/p5interpreter.pmc \
-  $(PMC_DIR)/p5namespace.pmc \
-  $(PMC_DIR)/p5scalar.pmc \
-  $(PMC_DIR)/p5hashiter.pmc
-
 SOURCES = \
   perl5.pir
 
@@ -60,10 +51,81 @@ BUILD_CLEANUPS = \
 
 TEST_CLEANUPS =
 
+VERSION_DIR   = @versiondir@
+INCLUDE_DIR   = @includedir@$(VERSION_DIR)
+SRC_DIR       = @srcdir@$(VERSION_DIR)
+TOOLS_DIR     = @libdir@$(VERSION_DIR)/tools/lib
+STAGING_DIR   = dynext
+#INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
+INSTALL_DIR   = $(LIB_DIR)/dynext
+
+# Setup some commands
+CC            = @cc@ -c
+LD            = @ld@
+LDFLAGS       = @ldflags@ @ld_debug@ @libs@
+LD_LOAD_FLAGS = @ld_load_flags@
+CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ @p5_ccopts@
+CC_OUT        = @cc_o_out@
+LD_OUT        = @ld_out@
+LIBPARROT     = @inst_libparrot_ldflags@
+
+PMC2C_INCLUDES  = --include $(SRC_DIR) --include $(SRC_DIR)/pmc --include $(PMC_DIR)
+PMC2C           = $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
+PMC2CD          = $(PMC2C) --dump $(PMC2C_INCLUDES)
+PMC2CC          = $(PMC2C) -c $(PMC2C_INCLUDES)
+
+INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
+LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) @p5_ldopts@
+
+BLIZKOST_GROUP = $(STAGING_DIR)/blizkost_group$(LOAD_EXT)
+
+PMC_BLIZKOST_GROUP = blizkost_group
+
+PMC_SOURCES = \
+  src/pmc/p5sv.pmc \
+  src/pmc/p5interpreter.pmc \
+  src/pmc/p5scalar.pmc \
+  src/pmc/p5hashiter.pmc \
+  src/pmc/p5namespace.pmc \
+  src/pmc/p5invocation.pmc
+
+PMC_C = $(PMC_SOURCES:.pmc=.c)
+PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
+
+OBJS = \
+  src/pmc/$(PMC_BLIZKOST_GROUP)$(O) \
+  src/pmc/bkmarshal$(O) \
+  $(PMC_SOURCES:.pmc=@o@)
+
+# the last is a bit fudgy, but we only use this for dependencies
+HEADERS = \
+  $(PMC_DIR)/bkmarshal.h \
+  $(PMC_DIR)/blizkost.h \
+  $(PMC_DIR)/bkmarshal.h \
+  $(PMC_DIR)/init_with_xs.h \
+  $(PMC_SOURCES:.pmc=.c)
+
+CLEANUPS = \
+  "src/pmc/*$(O)" \
+  "src/pmc/p5*.c" \
+  "src/pmc/pmc*.h" \
+  "src/pmc/*.dump" \
+#IF(win32):  "src/pmc/*.exp" \
+#IF(win32):  "src/pmc/*.ilk" \
+#IF(win32):  "src/pmc/*.manifext" \
+#IF(win32):  "src/pmc/*.pdb" \
+#IF(win32):  "src/pmc/*.lib" \
+  $(BLIZKOST_GROUP)
+
 # the default target
 build: \
   $(BLIZKOST_GROUP) \
   perl5.pbc
+
+$(BLIZKOST_GROUP): $(OBJS)
+	$(LD) $(LD_OUT)$(BLIZKOST_GROUP) $(OBJS) $(LINKARGS)
+#IF(cygwin):	CHMOD 0775 "$(BLIZKOST_GROUP)"
+#IF(hpux):	CHMOD 0775 "$(BLIZKOST_GROUP)"
 
 all: build blizkost@exe@ installable
 
@@ -76,12 +138,6 @@ blizkost@exe@: perl5.pbc
 	$(RM_F) perl5@exe@
 	$(CHMOD) 0775 blizkost@exe@
 #IF(win32):	copy $(BIN_DIR)\libparrot.dll .
-
-$(BLIZKOST_GROUP): pmc_linklibs
-#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-	$(CP) "src/pmc/*$(LOAD_EXT)" $(STAGING_DIR)
-
 
 src/gen_builtins.pir: build/gen_builtins_pir.pl
 	$(PERL) build/gen_builtins_pir.pl $(BUILTINS_PIR) > src/gen_builtins.pir
@@ -172,91 +228,28 @@ realclean:
 
 distclean: realclean
 
-VERSION_DIR   = @versiondir@
-INCLUDE_DIR   = @includedir@$(VERSION_DIR)
-SRC_DIR       = @srcdir@$(VERSION_DIR)
-TOOLS_DIR     = @libdir@$(VERSION_DIR)/tools/lib
-STAGING_DIR   = dynext
-#INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
-INSTALL_DIR   = $(LIB_DIR)/dynext
-
-# Setup some commands
-CC            = @cc@ -c
-LD            = @ld@
-LDFLAGS       = @ldflags@ @ld_debug@ @libs@
-LD_LOAD_FLAGS = @ld_load_flags@
-CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ @p5_ccopts@
-CC_OUT        = @cc_o_out@
-LD_OUT        = @ld_out@
-LIBPARROT     = @inst_libparrot_ldflags@
-
-PMC2C_INCLUDES  = --include $(SRC_DIR) --include $(SRC_DIR)/pmc --include $(PMC_DIR)
-PMC2C           = $(PERL) $(LIB_DIR)/tools/build/pmc2c.pl
-PMC2CD          = $(PMC2C) --dump $(PMC2C_INCLUDES)
-PMC2CC          = $(PMC2C) -c $(PMC2C_INCLUDES)
-
-INCLUDES        = -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/pmc
-LINKARGS        = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) @p5_ldopts@
-
-PMC_BLIZKOST_GROUP = blizkost_group
-
-PMC_SOURCES = \
-  src/pmc/p5sv.pmc \
-  src/pmc/p5interpreter.pmc \
-  src/pmc/p5scalar.pmc \
-  src/pmc/p5hashiter.pmc \
-  src/pmc/p5namespace.pmc \
-  src/pmc/p5invocation.pmc
-
-PMC_C = $(PMC_SOURCES:.pmc=.c)
-PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)
-
-OBJS = \
-  src/pmc/lib-$(PMC_BLIZKOST_GROUP)$(O) \
-  src/pmc/bkmarshal$(O) \
-  $(PMC_SOURCES:.pmc=@o@)
-
-CLEANUPS = \
-  "src/pmc/*$(LOAD_EXT)" \
-  "src/pmc/*$(O)" \
-  "src/pmc/p5*.c" \
-  "src/pmc/pmc*.h" \
-  "src/pmc/*.dump" \
-#IF(win32):  "src/pmc/*.exp" \
-#IF(win32):  "src/pmc/*.ilk" \
-#IF(win32):  "src/pmc/*.manifext" \
-#IF(win32):  "src/pmc/*.pdb" \
-#IF(win32):  "src/pmc/*.lib" \
-  $(STAGING_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
-
-src/pmc/init_with_xs.h:
+$(PMC_DIR)/init_with_xs.h:
 	$(PERL) -MExtUtils::Embed -e xsinit -- -o src/pmc/init_with_xs.h
 
-.SUFFIXES : .pmc .dump
+.SUFFIXES : .pmc .dump $(O)
 
 .pmc.dump:
 	$(PMC2C) --no-lines --dump $(PMC2C_INCLUDES) $<
-.pmc.c:
-	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $<
+# note that the pmc will always be older than the dump, as the dump will
+# be remade if needed first
+.dump.c:
+	$(PMC2C) --no-lines -c $(PMC2C_INCLUDES) $*.pmc
+.c$(O):
+	$(CC) $(CC_OUT)$@ $(INCLUDES) $(CFLAGS) $<
 
-pmc_generate: src/pmc/init_with_xs.h $(PMC_SOURCES) $(PMC_DUMP) $(PMC_C)
+$(PMC_DIR)/$(PMC_BLIZKOST_GROUP).c: $(PMC_SOURCES:.pmc=.dump)
 	$(PMC2C) --no-lines --library $(PMC_DIR)/$(PMC_BLIZKOST_GROUP) -c $(PMC_SOURCES)
 
-pmc_compile: pmc_generate
-	$(CC) $(CC_OUT)src/pmc/p5sv$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5sv.c
-	$(CC) $(CC_OUT)src/pmc/p5scalar$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5scalar.c
-	$(CC) $(CC_OUT)src/pmc/p5namespace$(O)  $(INCLUDES) $(CFLAGS) src/pmc/p5namespace.c
-	$(CC) $(CC_OUT)src/pmc/p5interpreter$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5interpreter.c
-	$(CC) $(CC_OUT)src/pmc/p5invocation$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5invocation.c
-	$(CC) $(CC_OUT)src/pmc/p5hashiter$(O) $(INCLUDES) $(CFLAGS) src/pmc/p5hashiter.c
-	$(CC) $(CC_OUT)src/pmc/lib-$(PMC_BLIZKOST_GROUP)$(O) $(INCLUDES) $(CFLAGS) src/pmc/$(PMC_BLIZKOST_GROUP).c
-	$(CC) $(CC_OUT)src/pmc/bkmarshal$(O) $(INCLUDES) $(CFLAGS) src/pmc/bkmarshal.c
+$(PMC_DIR)/p5scalar.dump: $(PMC_DIR)/p5sv.dump
 
-pmc_linklibs: pmc_compile
-	$(LD) $(LD_OUT)src/pmc/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)
+$(OBJS): $(HEADERS)
 
 # Local variables:
 #   mode: makefile
 # End:
 # vim: ft=make:
-
