@@ -19,7 +19,6 @@ PCT           = $(LIB_DIR)/library/PCT.pbc
 PMC_DIR       = src/pmc
 
 ## Setup some commands
-MAKE          = @make@
 PERL          = @p5_perl@
 CAT           = @cat@
 CHMOD         = @chmod@
@@ -78,8 +77,10 @@ blizkost@exe@: perl5.pbc
 	$(CHMOD) 0775 blizkost@exe@
 #IF(win32):	copy $(BIN_DIR)\libparrot.dll .
 
-$(BLIZKOST_GROUP): $(PMC_DEPS)
-	$(MAKE) pmc_all
+$(BLIZKOST_GROUP): pmc_linklibs
+#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+	$(CP) "src/pmc/*$(LOAD_EXT)" $(STAGING_DIR)
 
 
 src/gen_builtins.pir: build/gen_builtins_pir.pl
@@ -131,7 +132,10 @@ test-installable: installable
 	echo "1" | ./installable_blizkost@exe@
 
 install: installable
-	$(MAKE) pmc_install
+#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
+	$(MKPATH) $(INSTALL_DIR)
+	$(CP) "src/pmc/*$(LOAD_EXT)" $(INSTALL_DIR)
 	$(CP) installable_blizkost@exe@ $(BIN_DIR)/parrot-blizkost@exe@
 	$(CHMOD) 0755 $(BIN_DIR)/parrot-blizkost@exe@
 	-$(MKPATH) $(LIB_DIR)/languages/perl5
@@ -141,7 +145,7 @@ install: installable
 	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
 
 uninstall:
-	$(MAKE) pmc_uninstall
+	$(RM_F) $(INSTALL_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
 	$(RM_F) $(BIN_DIR)/parrot-blizkost@exe@
 	$(RM_RF) $(LIB_DIR)/languages/perl5
 	$(RM_F) $(MANDIR)/man1/parrot-blizkost.1
@@ -161,12 +165,10 @@ testclean:
 	$(RM_F) $(TEST_CLEANUPS)
 
 clean:
-	$(MAKE) pmc_clean
-	$(RM_F) $(TEST_CLEANUPS) $(BUILD_CLEANUPS)
+	$(RM_F) $(CLEANUPS) $(TEST_CLEANUPS) $(BUILD_CLEANUPS)
 
 realclean:
-	$(MAKE) pmc_realclean
-	$(RM_F) $(TEST_CLEANUPS) $(BUILD_CLEANUPS) Makefile
+	$(RM_F) $(CLEANUPS) $(TEST_CLEANUPS) $(BUILD_CLEANUPS) Makefile
 
 distclean: realclean
 
@@ -227,8 +229,6 @@ CLEANUPS = \
 #IF(win32):  "src/pmc/*.lib" \
   $(STAGING_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
 
-pmc_all: pmc_staging
-
 src/pmc/init_with_xs.h:
 	$(PERL) -MExtUtils::Embed -e xsinit -- -o src/pmc/init_with_xs.h
 
@@ -254,26 +254,6 @@ pmc_compile: pmc_generate
 
 pmc_linklibs: pmc_compile
 	$(LD) $(LD_OUT)src/pmc/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT) $(OBJS) $(LINKARGS)
-
-pmc_staging: pmc_linklibs
-#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-	$(CP) "src/pmc/*$(LOAD_EXT)" $(STAGING_DIR)
-
-pmc_install:
-#IF(cygwin):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-#IF(hpux):	CHMOD 0775 "src/pmc/*$(LOAD_EXT)"
-	$(MKPATH) $(INSTALL_DIR)
-	$(CP) "src/pmc/*$(LOAD_EXT)" $(INSTALL_DIR)
-
-pmc_uninstall:
-	$(RM_F) $(INSTALL_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
-
-pmc_clean:
-	$(RM_F) $(CLEANUPS)
-
-pmc_realclean:
-	$(RM_F) $(CLEANUPS)
 
 # Local variables:
 #   mode: makefile
