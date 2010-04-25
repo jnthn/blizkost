@@ -162,14 +162,14 @@ Acquire a namespace handle.
 */
 
     METHOD PMC *get_namespace(STRING *name) {
-        PMC *pmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
+        PMC *ns = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                     string_from_literal(interp, "P5Namespace")));
         /* Set up the underlying structure. */
-        PObj_custom_mark_SET(pmc);
-        SETATTR_P5Namespace_p5i(interp, pmc, SELF);
-        SETATTR_P5Namespace_ns_name(interp, pmc, name);
+        PObj_custom_mark_SET(ns);
+        SETATTR_P5Namespace_p5i(interp, ns, SELF);
+        SETATTR_P5Namespace_ns_name(interp, ns, name);
 
-        RETURN(PMC *pmc);
+        RETURN(PMC *ns);
     }
 }
 
