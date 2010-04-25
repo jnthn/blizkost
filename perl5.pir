@@ -23,7 +23,7 @@ Creates the compiler using a C<PCT::HLLCompiler> object.
 .sub 'onload' :anon :load :init
     $P0 = box .Parrot_dlopen_global_FLAG
     $P1 = loadlib 'blizkost_group', $P0
-    load_bytecode 'PCT.pbc'
+    load_bytecode 'PCT/HLLCompiler.pbc'
 
     $P2 = split ' ', '$!interp $!requirer $!export-lister'
 
