@@ -86,6 +86,16 @@ my $explist = sub {
     for my $name (keys %Blizkost::ImportZone::) {
         my $gref = \$Blizkost::ImportZone::{$name};
 
+        # Perl5 has a clever feature where a constant subroutine can be
+        # represented by putting a reference in the symbol table instead
+        # of an actual symbol table entry, saving memory and time.  Pity
+        # we have to undo it.
+        if (ref($gref)) {
+            my $val = $$gref;
+            push @output, 'sub', $name, sub () { $val };
+            next;
+        }
+
         my %things;
 
         for my $type (qw/SCALAR ARRAY HASH IO/) {
