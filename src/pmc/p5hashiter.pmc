@@ -77,8 +77,8 @@ Mark GC-ables.
 
     VTABLE PMC *shift_pmc() {
         HE      *current_he = force_current_he(INTERP, SELF);
-        SV      *keysv;
-        PMC     *p5i, *hash;
+        SV      *hashsv;
+        PMC     *p5i, *hash, *tmppmc, *retpmc;
         PerlInterpreter *my_perl;
 
         if (current_he == NULL) {
@@ -90,10 +90,19 @@ Mark GC-ables.
 
         GET_ATTR_backing_hash(INTERP, SELF, hash);
         GETATTR_P5SV_p5i(INTERP, hash, p5i);
+        GETATTR_P5SV_sv(INTERP, hash, hashsv);
         GETATTR_P5Interpreter_my_perl(INTERP, p5i, my_perl);
 
-        keysv = hv_iterkeysv(current_he);
+        retpmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
+                string_from_literal(interp, "P5HashIterResult")));
+        PObj_custom_mark_SET(retpmc);
 
-        return blizkost_wrap_sv(INTERP, p5i, keysv);
+        SETATTR_P5HashIterResult_hekey(INTERP, retpmc,
+                blizkost_wrap_sv(INTERP, p5i, hv_iterkeysv(current_he)));
+        SETATTR_P5HashIterResult_hevalue(INTERP, retpmc,
+                blizkost_wrap_sv(INTERP, p5i,
+                    hv_iterval((HV*)hashsv, current_he)));
+
+        return retpmc;
     }
 }

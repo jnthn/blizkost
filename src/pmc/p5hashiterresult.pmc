@@ -1,0 +1,58 @@
+/*
+Copyright (C) 2009, Jonathan Worthington and friends
+
+This file is distributed under the same terms as Parrot itself; see the
+file LICENSE in the source root for details.
+
+=head1 NAME
+
+src/pmc/p5hashiterresult.pmc - Perl 5 hash entry
+
+=head1 DESCRIPTION
+
+This module provides a pair for p5hashiter to return.
+
+=cut
+
+*/
+
+#include "blizkost.h"
+
+pmclass P5HashIterResult no_ro group blizkost_group dynpmc auto_attrs {
+    ATTR PMC *hekey;
+    ATTR PMC *hevalue;
+
+    VTABLE void init() {
+        Parrot_ex_throw_from_c_args(interp, NULL, EXCEPTION_INVALID_OPERATION,
+            "Attempt to directly instantiate a P5HashIterResult");
+    }
+
+    VTABLE void mark() {
+        PMC *key;
+        PMC *value;
+        GET_ATTR_hekey(interp, SELF, key);
+        GET_ATTR_hevalue(interp, SELF, value);
+        if (key)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)key);
+        if (value)
+            Parrot_gc_mark_PObj_alive(interp, (PObj*)value);
+    }
+
+    VTABLE PMC *get_pmc() {
+        return PARROT_P5HASHITERRESULT(SELF)->hekey;
+    }
+
+    METHOD key() {
+        PMC *ret = PARROT_P5HASHITERRESULT(SELF)->hekey;
+        RETURN(PMC *ret);
+    }
+
+    METHOD value() {
+        PMC *ret = PARROT_P5HASHITERRESULT(SELF)->hevalue;
+        RETURN(PMC *ret);
+    }
+
+    VTABLE STRING* get_string() {
+        return VTABLE_get_string(INTERP, PARROT_P5HASHITERRESULT(SELF)->hekey);
+    }
+}

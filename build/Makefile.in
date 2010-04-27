@@ -75,7 +75,8 @@ PMC_SOURCES = \
   src/pmc/p5scalar.pmc \
   src/pmc/p5hashiter.pmc \
   src/pmc/p5namespace.pmc \
-  src/pmc/p5invocation.pmc
+  src/pmc/p5invocation.pmc \
+  src/pmc/p5hashiterresult.pmc
 
 PMC_C = $(PMC_SOURCES:.pmc=.c)
 PMC_DUMP = $(PMC_SOURCES:.pmc=.dump)

@@ -61,6 +61,7 @@ does the necessary cruft to import both in the same file.
 #include "pmc_p5sv.h"
 #include "pmc_p5scalar.h"
 #include "pmc_p5hashiter.h"
+#include "pmc_p5hashiterresult.h"
 
 extern HE blizkost_EMPTY;
 
