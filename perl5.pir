@@ -151,6 +151,7 @@ End_Init_Code
     .lex "$interp", p5i
     .lex "$code", source
     .const 'Sub' $P1 = "interp_stub"
+    $P1 = newclosure $P1
     capture_lex $P1
     .return ($P1)
 .end
