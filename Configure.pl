@@ -20,6 +20,7 @@ use 5.010;
 use strict;
 use warnings;
 use Config;
+my %Perlconfig = %Config;
 
 use Getopt::Long qw(:config auto_help);
 
@@ -53,6 +54,19 @@ my %config = read_parrot_config(@parrot_config_exe);
 unless (%config) {
     die "Unable to locate parrot_config\n"
         ."Please give me the path to it with the --parrot-config=... option.";
+}
+
+my $caution = 0;
+sub dubious {
+    my ($bool, $msg) = @_;
+
+    if ($bool) {
+        print "* * * CONFIGURE HAS DETECTED A POTENTIAL PROBLEM\n";
+        print $msg;
+        print "\n";
+
+        $caution ||= 1;
+    }
 }
 
 $config{p5_ldopts} = ldopts(1);
@@ -115,6 +129,34 @@ sub slurp {
     return $maketext;
 }
 
+dubious !$Perlconfig{usemultiplicity}, <<MULT;
+Your Perl is not configured to allow runtime creation of new interpreters.
+Chances of success are quite slim.  You should recompile Perl with the
+-Dusemultiplicity configuration option (-Dusethreads implies this).
+MULT
+
+dubious !$Perlconfig{useshrplib}, <<SHR;
+Your Perl is not built as a dynamic library.  In the best case this will result
+in a bloated Blizkost library; other possible results include significantly
+slower startup, increased per-process memory usage, and in the worst case
+crashes, depending on platform, as using non-dynamic libraries from dynamic
+ones is rarely well supported.  If this is a problem in your environment,
+reconfigure Perl with -Duseshrplib.
+SHR
+
+dubious $Perlconfig{cc} ne $config{cc}, <<TWOCC;
+Blizkost needs to be built using the same version of the same C compiler as
+both Perl and Parrot, in order to have a compatible interpretation of runtime
+data layouts.  However, this is not possible, as your Perl and your Parrot are
+built with different C compilers (Perl: $Perlconfig{cc}, Parrot: $config{cc})!
+Runtime instabilities are the most likely result.  To fix, recompile Parrot or
+Perl with the other's compiler.
+TWOCC
+
+# XXX: Find a good way to test CPU types, for multiarch systems (it's rarely
+# possible to dlopen code for a different CPU, even if both CPU types can be
+# interpreted by the hardware)
+
 print <<BYE;
 Okay, we're done!
 
@@ -124,6 +166,11 @@ build the binary.  After that, you can use `make test' to run the test suite.
 Happy Hacking,
         The Blizkost Team
 BYE
+
+if ($caution) {
+    print "\n* * * Proceed with installation at your own risk.\n";
+    exit 1;
+}
 
 # Local Variables:
 #   mode: cperl
