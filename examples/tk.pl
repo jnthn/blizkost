@@ -1,25 +1,20 @@
 # vim: ft=perl6
-# (actually NQP; the real Perl6 version will be much neater)
 
-# next 6 lines would be 'use' in a real language
-pir::load_bytecode('perl5.pbc');
-my $comp := pir::compreg__ps('perl5');
+use Tk:from<perl5>;
 
-my $mod  := $comp.load_module('Tk');
-my %exp  := $comp.get_exports($mod);
-
-my $MainWindow := $comp.get_namespace('MainWindow');
-my &MainLoop := %exp<sub><MainLoop>;
-###
-
-my $mw := $MainWindow.new;
+# Larry says that in the scope of a use :from<perl5>, a lexical CANDO should
+# be installed which allows reference to Perl5 packages (which are trueglobal)
+# as variables in scope.  Alternatively, there could be a syntax for binding
+# without requiring.
+my $mw = eval("'MainWindow'", :lang<perl5>).new;
 
 $mw.Label('-text', 'Hello, world!').pack;
 
-# NQP doesn't support named args starting with a dash
+# We can't currently propagate rakudosubs because they don't advertize
+# themselves the same way as others - see TT#1597
 $mw.Button(
     '-text',    'Quit',
-    '-command', sub (*@_) { pir::exit(0) },
+    '-command', (sub (*@_) { pir::exit(0) }).do,
 ).pack;
 
-&MainLoop();
+MainLoop();
