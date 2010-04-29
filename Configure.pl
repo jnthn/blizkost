@@ -8,7 +8,7 @@ Configure.pl - a configure script for Blizkost
 
   perl Configure.pl
 
-  perl Configure.pl --parrot-config=<path_to_parrot>
+  perl Configure.pl --parrot-config=<path_to_parrot_config>
 
   perl Configure.pl --gen-parrot [ -- --options-for-configure-parrot ]
 
