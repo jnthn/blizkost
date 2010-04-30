@@ -309,6 +309,9 @@ XS(blizkost_callable_trampoline)
 
     blizkost_get_bound_pmc(my_perl, &nexus, (SV *)cv, &callable);
 
+    if (nexus->dying)
+        exit_fatal(1, "Attempted reentry of Parrot code during global destruction");
+
     PERL_UNUSED_VAR(ax);
     SP -= items;
     PUTBACK;

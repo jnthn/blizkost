@@ -23,6 +23,7 @@ typedef struct blizkost_nexus {
     PerlInterpreter *my_perl;
     Parrot_Interp parrot_interp;
     PMC *p5i;
+    int dying;
 } blizkost_nexus;
 
 #define BLIZKOST_NEXUS blizkost_nexus *nexus

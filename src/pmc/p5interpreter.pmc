@@ -87,6 +87,7 @@ Set up P5Interpreter PMC.
         SET_ATTR_nexus(interp, SELF, nexus);
         nexus->parrot_interp = interp;
         nexus->p5i = SELF;
+        nexus->dying = 0;
 
         /* We turn on auto-flush to avoid oddness in interactions between
          * IO systems. */
@@ -105,6 +106,8 @@ Destructor for the P5Interpreter PMC.
     VTABLE void destroy() {
         struct blizkost_nexus *nexus = PARROT_P5INTERPRETER(SELF)->nexus;
         dBNPERL;
+
+        nexus->dying = 1;
 
         perl_destruct(my_perl);
         perl_free(my_perl);

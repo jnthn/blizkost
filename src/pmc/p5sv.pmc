@@ -67,7 +67,8 @@ Decrement reference count of held SV.
         SV              *sv    = PARROT_P5SV(SELF)->sv;
         dBNPERL;
 
-        SvREFCNT_dec(sv);
+        if (!nexus->dying)
+            SvREFCNT_dec(sv);
     }
 
 }
