@@ -20,8 +20,8 @@ invocation model and calling conventions.
 #include "blizkost.h"
 
 pmclass P5Invocation group blizkost_group dynpmc auto_attrs {
-    ATTR PMC       *p5i;
-    ATTR STRING    *name;
+    ATTR struct blizkost_nexus  *nexus;
+    ATTR STRING                 *name;
 
 /*
 
@@ -47,14 +47,11 @@ Mark GC-ables.
 
 */
     VTABLE void mark() {
-        PMC    *p5i;
-        STRING *name;
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GET_ATTR_name(interp, SELF, name);
-        if (p5i)
-            Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-        if (name)
-            Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
+        blizkost_nexus *nexus = PARROT_P5INVOCATION(SELF)->nexus;
+        STRING         *name  = PARROT_P5INVOCATION(SELF)->name;
+
+        Parrot_gc_mark_PObj_alive(interp, (PObj*)nexus->p5i);
+        Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
     }
 
 /*
@@ -67,30 +64,26 @@ Handles the actual invocation.
 
 */
     VTABLE opcode_t *invoke(void *next) {
-        STRING          *name;
-        char            *c_name;
-        PMC             *p5i, *results;
+        blizkost_nexus *nexus = PARROT_P5INVOCATION(SELF)->nexus;
+        STRING         *name  = PARROT_P5INVOCATION(SELF)->name;
+        char           *c_name;
+        PMC            *results;
 
         PMC *ctx         = CURRENT_CONTEXT(interp);
         PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
 
         PMC *positional, *named;
-        PerlInterpreter *my_perl;
 
         SV *namesv;
+        dBNPERL;
 
         Parrot_pcc_fill_params_from_c_args(interp, call_object, "PsPns",
                 &positional, &named);
 
-        /* Get the interpreter, SV and the name. */
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_name(interp, SELF, name);
         c_name = Parrot_str_to_cstring(interp, name);
-
         namesv = newSVpv(c_name, strlen(c_name));
 
-        blizkost_call_in(interp, p5i, namesv, G_METHOD | G_ARRAY, positional,
+        blizkost_call_in(nexus, namesv, G_METHOD | G_ARRAY, positional,
                 named, &results);
 
         SvREFCNT_dec(namesv);

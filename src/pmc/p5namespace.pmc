@@ -19,7 +19,7 @@ These are the vtable functions for the P5Namespace class.
 #include "blizkost.h"
 
 pmclass P5Namespace group blizkost_group dynpmc auto_attrs {
-    ATTR PMC    *p5i;
+    ATTR struct blizkost_nexus *nexus;
     ATTR STRING *ns_name;
 
     VTABLE void init() {
@@ -37,14 +37,11 @@ Mark GC-ables.
 
 */
     VTABLE void mark() {
-        PMC    *p5i;
-        STRING *name;
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GET_ATTR_ns_name(interp, SELF, name);
-        if (p5i)
-            Parrot_gc_mark_PObj_alive(interp, (PObj*)p5i);
-        if (name)
-            Parrot_gc_mark_PObj_alive(interp, (PObj*)name);
+        blizkost_nexus *nexus   = PARROT_P5NAMESPACE(SELF)->nexus;
+        STRING         *ns_name = PARROT_P5NAMESPACE(SELF)->ns_name;
+
+        Parrot_gc_mark_PObj_alive(interp, (PObj*)nexus->p5i);
+        Parrot_gc_mark_PObj_alive(interp, (PObj*)ns_name);
     }
 
 /*
@@ -57,12 +54,12 @@ Hands back a P5Invocation so we can call a method on the package.
 
 */
     VTABLE PMC *find_method(STRING *name) {
-        PMC *p5i, *result;
-        GET_ATTR_p5i(interp, SELF, p5i);
+        blizkost_nexus *nexus   = PARROT_P5NAMESPACE(SELF)->nexus;
+        PMC            *result;
 
         /* Make and return a P5Invocation object. */
         result = pmc_new(interp, pmc_type(interp, CONST_STRING(interp, "P5Invocation")));
-        SETATTR_P5Invocation_p5i(interp, result, p5i);
+        SETATTR_P5Invocation_nexus(interp, result, nexus);
         SETATTR_P5Invocation_name(interp, result, name);
         return result;
     }

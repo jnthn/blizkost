@@ -43,11 +43,7 @@ static int inited = 0;
 */
 
 pmclass P5Interpreter group blizkost_group dynpmc auto_attrs {
-    ATTR struct interpreter *my_perl;
-    /* These fields are here so that the callin code can use P5Interpreter
-       attribute blocks as a proxy.  Possibly a bit hackish. */
-    ATTR Parrot_Interp parrot_interp;
-    ATTR PMC *self;
+    ATTR struct blizkost_nexus *nexus;
 
 /*
 
@@ -60,6 +56,7 @@ Set up P5Interpreter PMC.
 */
 
     VTABLE void init() {
+        struct blizkost_nexus *nexus;
         struct interpreter *my_perl;
         char embedding_s[][3] = { "", "-e", "0" };
         char *embedding[] = { embedding_s[0], embedding_s[1],
@@ -79,16 +76,17 @@ Set up P5Interpreter PMC.
             inited = 1;
         }
 
+        Newx(nexus, 1, struct blizkost_nexus);
         /* Allocate interpreter and stash it in struct. */
-        my_perl = perl_alloc();
+        my_perl = nexus->my_perl = perl_alloc();
         perl_construct(my_perl);
         PL_origalen = 1;
         perl_parse(my_perl, xs_init, 3, embedding, NULL);
         PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
         perl_run(my_perl);
-        SET_ATTR_my_perl(interp, SELF, my_perl);
-        SET_ATTR_self(interp, SELF, SELF);
-        SET_ATTR_parrot_interp(interp, SELF, interp);
+        SET_ATTR_nexus(interp, SELF, nexus);
+        nexus->parrot_interp = interp;
+        nexus->p5i = SELF;
 
         /* We turn on auto-flush to avoid oddness in interactions between
          * IO systems. */
@@ -105,10 +103,9 @@ Destructor for the P5Interpreter PMC.
 
 */
     VTABLE void destroy() {
-        struct interpreter *my_perl;
+        struct blizkost_nexus *nexus = PARROT_P5INTERPRETER(SELF)->nexus;
+        dBNPERL;
 
-        /* Destroy interpreter if it's got no more usage. */
-        GET_ATTR_my_perl(interp, SELF, my_perl);
         perl_destruct(my_perl);
         perl_free(my_perl);
 
@@ -129,7 +126,8 @@ Run the Perl 5 code.
 */
 
     VTABLE opcode_t *invoke(void *next) {
-        struct interpreter *my_perl;
+        struct blizkost_nexus *nexus = PARROT_P5INTERPRETER(SELF)->nexus;
+        dBNPERL;
         PMC    *result;
         STRING *source;
         char   *c_source;
@@ -143,8 +141,7 @@ Run the Perl 5 code.
         c_source = Parrot_str_to_cstring(interp, source);
 
         /* Evaluate it. */
-        GET_ATTR_my_perl(interp, SELF, my_perl);
-        result = blizkost_wrap_sv(interp, SELF, eval_pv(c_source, TRUE));
+        result = blizkost_wrap_sv(nexus, eval_pv(c_source, TRUE));
 
         Parrot_pcc_build_call_from_c_args(interp, call_object, "P", result);
 
@@ -162,11 +159,12 @@ Acquire a namespace handle.
 */
 
     METHOD PMC *get_namespace(STRING *name) {
+        struct blizkost_nexus *nexus = PARROT_P5INTERPRETER(SELF)->nexus;
         PMC *ns = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                     string_from_literal(interp, "P5Namespace")));
         /* Set up the underlying structure. */
         PObj_custom_mark_SET(ns);
-        SETATTR_P5Namespace_p5i(interp, ns, SELF);
+        SETATTR_P5Namespace_nexus(interp, ns, nexus);
         SETATTR_P5Namespace_ns_name(interp, ns, name);
 
         RETURN(PMC *ns);

@@ -24,9 +24,11 @@ HE blizkost_EMPTY; /*semipredicate*/
 static HE *
 force_current_he(PARROT_INTERP, PMC *hiter) {
     HE              *current_he;
-    PMC             *hash, *p5i;
+    PMC             *hash;
+    blizkost_nexus  *nexus =
+        PARROT_P5SV(PARROT_P5HASHITER(hiter)->backing_hash)->nexus;
     HV              *hashsv;
-    PerlInterpreter *my_perl;
+    dBNPERL;
 
     GETATTR_P5HashIter_current_he(interp, hiter, current_he);
 
@@ -35,9 +37,7 @@ force_current_he(PARROT_INTERP, PMC *hiter) {
     }
 
     GETATTR_P5HashIter_backing_hash(interp, hiter, hash);
-    GETATTR_P5SV_p5i(interp, hash, p5i);
-    GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-    GETATTR_P5SV_sv(interp, hash, hashsv);
+    hashsv = (HV*) PARROT_P5SV(hash)->sv;
 
     current_he = hv_iternext(hashsv);
 
@@ -76,10 +76,12 @@ Mark GC-ables.
     }
 
     VTABLE PMC *shift_pmc() {
+        blizkost_nexus *nexus =
+            PARROT_P5SV(PARROT_P5HASHITER(SELF)->backing_hash)->nexus;
         HE      *current_he = force_current_he(INTERP, SELF);
         SV      *hashsv;
-        PMC     *p5i, *hash, *tmppmc, *retpmc;
-        PerlInterpreter *my_perl;
+        PMC     *hash, *retpmc;
+        dBNPERL;
 
         if (current_he == NULL) {
             Parrot_ex_throw_from_c_args(INTERP, NULL, EXCEPTION_OUT_OF_BOUNDS,
@@ -89,19 +91,16 @@ Mark GC-ables.
         SET_ATTR_current_he(INTERP, SELF, &blizkost_EMPTY);
 
         GET_ATTR_backing_hash(INTERP, SELF, hash);
-        GETATTR_P5SV_p5i(INTERP, hash, p5i);
         GETATTR_P5SV_sv(INTERP, hash, hashsv);
-        GETATTR_P5Interpreter_my_perl(INTERP, p5i, my_perl);
 
         retpmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
                 string_from_literal(interp, "P5HashIterResult")));
         PObj_custom_mark_SET(retpmc);
 
         SETATTR_P5HashIterResult_hekey(INTERP, retpmc,
-                blizkost_wrap_sv(INTERP, p5i, hv_iterkeysv(current_he)));
+                blizkost_wrap_sv(nexus, hv_iterkeysv(current_he)));
         SETATTR_P5HashIterResult_hevalue(INTERP, retpmc,
-                blizkost_wrap_sv(INTERP, p5i,
-                    hv_iterval((HV*)hashsv, current_he)));
+                blizkost_wrap_sv(nexus, hv_iterval((HV*)hashsv, current_he)));
 
         return retpmc;
     }

@@ -45,12 +45,10 @@ Returns the integer value of the SV.
 */
 
     VTABLE INTVAL get_integer() {
-        PMC             *p5i;
-        PerlInterpreter *my_perl;
-        struct sv       *sv;
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, sv);
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
         return SvIV(sv);
     }
 
@@ -65,12 +63,10 @@ Returns the number value of the SV.
 */
 
     VTABLE FLOATVAL get_number() {
-        PMC             *p5i;
-        PerlInterpreter *my_perl;
-        struct sv       *sv;
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, sv);
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
         return SvNV(sv);
     }
 
@@ -84,27 +80,25 @@ Returns the string value of the SV.
 
 */
     VTABLE STRING *get_string() {
-        PMC             *p5i;
-        PerlInterpreter *my_perl;
-        struct sv       *sv;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
         char            *perl5_str;
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, sv);
+
         perl5_str = SvPVutf8_nolen(sv);
         return Parrot_str_new(interp, perl5_str, strlen(perl5_str));
     }
 
     VTABLE PMC *get_pmc_keyed(PMC *key) {
-        PerlInterpreter *my_perl;
-        PMC             *p5i, *elpmc;
-        SV              *sv, *rsv, *element;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
+        PMC             *elpmc;
+        SV              *rsv, *element;
         svtype          type;
         PMC             *nextkey = key_next(interp, key);
-
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, sv);
 
         SvGETMAGIC(sv);
 
@@ -140,7 +134,7 @@ Returns the string value of the SV.
         }
 
         if (element)
-            elpmc = blizkost_wrap_sv(interp, p5i, element);
+            elpmc = blizkost_wrap_sv(nexus, element);
         else
             elpmc = PMCNULL;
 
@@ -156,14 +150,13 @@ Returns the string value of the SV.
     }
 
     VTABLE PMC *get_iter() {
-        PerlInterpreter *my_perl;
-        PMC             *p5i, *elpmc;
-        SV              *sv, *rsv, *element;
-        svtype          type;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
 
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, sv);
+        PMC             *elpmc;
+        SV              *rsv, *element;
+        svtype          type;
 
         ENTER;
         SAVETMPS;
@@ -190,7 +183,7 @@ Returns the string value of the SV.
             PObj_custom_mark_SET(iter);
             /* XXX this is a cheat */
             SETATTR_P5HashIter_backing_hash(interp, iter,
-                    blizkost_wrap_sv(interp, p5i, (SV*)rsv));
+                    blizkost_wrap_sv(nexus, (SV*)rsv));
             SETATTR_P5HashIter_current_he(interp, iter, &blizkost_EMPTY);
 
             FREETMPS;
@@ -216,17 +209,14 @@ the given name on the given Perl 5 Scalar invocant.
 
 */
     VTABLE PMC *find_method(STRING *name) {
-        PMC             *result;
-        PMC             *p5i;
-        PerlInterpreter *my_perl;
-        struct sv       *invocant;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
 
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, invocant);
+        PMC             *result;
 
         result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Invocation")));
-        SETATTR_P5Invocation_p5i(interp, result, p5i);
+        SETATTR_P5Invocation_nexus(interp, result, nexus);
         SETATTR_P5Invocation_name(interp, result, name);
 
         return result;
@@ -242,23 +232,20 @@ Attempts to invoke the target of a code reference.
 
 */
     VTABLE opcode_t *invoke(void *next) {
-        PMC             *p5i, *positional, *named, *results;
-        PerlInterpreter *my_perl;
-        SV              *invref;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
+        PMC             *positional, *named, *results;
 
         PMC *ctx         = CURRENT_CONTEXT(interp);
         PMC *call_object = Parrot_pcc_get_signature(interp, ctx);
         PMC *ret_object;
 
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, invref);
-
         Parrot_pcc_fill_params_from_c_args(interp, call_object, "PsPns",
                 &positional, &named);
 
-        blizkost_call_in(interp, p5i, invref, G_ARRAY, positional, named,
-                &results);
+        blizkost_call_in(nexus, sv, G_ARRAY, positional, named, &results);
 
         ret_object = Parrot_pcc_build_call_from_c_args(interp, call_object,
                 "Pf", results);
@@ -276,19 +263,17 @@ Checks if a class can do a given method.
 
 */
     VTABLE INTVAL can(STRING *name) {
-        PMC             *p5i;
-        PerlInterpreter *my_perl;
-        struct sv       *invocant;
+        blizkost_nexus  *nexus = PARROT_P5SV(SELF)->nexus;
+        SV              *sv    = PARROT_P5SV(SELF)->sv;
+        dBNPERL;
+
         INTVAL           result;
         char            *c_name;
 
-        GET_ATTR_p5i(interp, SELF, p5i);
-        GETATTR_P5Interpreter_my_perl(interp, p5i, my_perl);
-        GET_ATTR_sv(interp, SELF, invocant);
         c_name = Parrot_str_to_cstring(interp, name);
 
         /* If it's not blessed, the answer is "no" right off. */
-        if (!sv_isobject(invocant))
+        if (!sv_isobject(sv))
             return 0;
 
         /* Otherwise, try UNIVERSAL::can. */
@@ -297,7 +282,7 @@ Checks if a class can do a given method.
             ENTER;
             SAVETMPS;
             PUSHMARK(SP);
-            XPUSHs(invocant);
+            XPUSHs(sv);
             XPUSHs(sv_2mortal(newSVpv(c_name, strlen(c_name))));
             PUTBACK;
             call_pv("UNIVERSAL::can", G_SCALAR);
