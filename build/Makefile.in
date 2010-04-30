@@ -24,7 +24,7 @@ PMC_DIR       = src/pmc
 ## Setup some commands
 CC            = @cc@ -c
 CC_OUT        = @cc_o_out@
-CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@ @p5_ccopts@
+CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @gc_flag@ @p5_ccopts@
 CHMOD         = @chmod@
 CP            = @cp@
 LD            = @ld@
