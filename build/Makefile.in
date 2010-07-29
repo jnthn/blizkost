@@ -178,7 +178,7 @@ install: installable
 	$(CHMOD) 0755 $(BIN_DIR)/parrot-blizkost@exe@
 	-$(MKPATH) $(LIB_DIR)/languages/perl5
 	$(CP) perl5.pbc $(LIB_DIR)/languages/perl5/perl5.pbc
-	-$(MKPATH) $(MANDIR)/man1
+	-$(MKPATH) $(MAN_DIR)/man1
 	-$(MKPATH) $(DOC_DIR)/languages/perl5
 	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
 
@@ -186,7 +186,7 @@ uninstall:
 	$(RM_F) $(INSTALL_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
 	$(RM_F) $(BIN_DIR)/parrot-blizkost@exe@
 	$(RM_RF) $(LIB_DIR)/languages/perl5
-	$(RM_F) $(MANDIR)/man1/parrot-blizkost.1
+	$(RM_F) $(MAN_DIR)/man1/parrot-blizkost.1
 	$(RM_RF) $(DOC_DIR)/languages/perl5
 
 win32-inno-installer: installable
