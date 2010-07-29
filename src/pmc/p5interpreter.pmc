@@ -76,9 +76,10 @@ Set up P5Interpreter PMC.
             inited = 1;
         }
 
-        Newx(nexus, 1, struct blizkost_nexus);
         /* Allocate interpreter and stash it in struct. */
-        my_perl = nexus->my_perl = perl_alloc();
+        my_perl = perl_alloc();
+        Newx(nexus, 1, struct blizkost_nexus);
+        nexus->my_perl = my_perl;
         perl_construct(my_perl);
         PL_origalen = 1;
         perl_parse(my_perl, xs_init, 3, embedding, NULL);
