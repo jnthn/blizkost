@@ -157,11 +157,12 @@ TWOCC
 # possible to dlopen code for a different CPU, even if both CPU types can be
 # interpreted by the hardware)
 
+my $make = $config{make};
 print <<BYE;
 Okay, we're done!
 
-You can now use `make' to build your Blizkost library, or 'make blizkost' to
-build the binary.  After that, you can use `make test' to run the test suite.
+You can now use `$make' to build your Blizkost library, or '$make blizkost' to
+build the binary.  After that, you can use `$make test' to run the test suite.
 
 Happy Hacking,
         The Blizkost Team
