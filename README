@@ -7,7 +7,7 @@ from there.
 =head2 How?
 
 First build and install (requires an installed parrot,
-including C<make install-dev>):
+including C<make install-dev> or C<apt-get install libperl-dev>):
 
   perl Configure.pl --parrot-config=... # path to installed parrot_config
   make
