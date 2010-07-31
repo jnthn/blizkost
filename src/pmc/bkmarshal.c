@@ -295,7 +295,7 @@ blizkost_bind_pmc_to_sv(BLIZKOST_NEXUS, SV *sv, PMC *target) {
 }
 
 /* can't really use xsubpp here... */
-static
+extern
 XS(blizkost_callable_trampoline)
 {
 #ifdef dVAR
