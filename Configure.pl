@@ -144,6 +144,11 @@ ones is rarely well supported.  If this is a problem in your environment,
 reconfigure Perl with -Duseshrplib.
 SHR
 
+# cygwin perl uses the gcc alias, but is gcc-4. cygwin parrot uses gcc-4.
+$Perlconfig{cc} = 'gcc-4' if $Perlconfig{cc} eq 'gcc'
+  and $^O eq 'cygwin'
+  and $Perlconfig{gccversion} eq '4.3.4 20090804 (release) 1';
+
 dubious $Perlconfig{cc} ne $config{cc}, <<TWOCC;
 Blizkost needs to be built using the same version of the same C compiler as
 both Perl and Parrot, in order to have a compatible interpretation of runtime
