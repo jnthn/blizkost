@@ -2,6 +2,7 @@
 PARROT_ARGS   =
 
 ## configuration settings
+DESTDIR      ?=
 BIN_DIR       = @bindir@
 LIB_DIR       = @libdir@$(VERSION_DIR)
 DOC_DIR       = @docdir@$(VERSION_DIR)
@@ -12,7 +13,7 @@ SRC_DIR       = @srcdir@$(VERSION_DIR)
 TOOLS_DIR     = @libdir@$(VERSION_DIR)/tools/lib
 STAGING_DIR   = dynext
 #INSTALL_DIR   = $(LIB_DIR)/languages/blizkost/dynext
-INSTALL_DIR   = $(LIB_DIR)/dynext
+INSTALL_DIR   = $(DESTDIR)$(LIB_DIR)/dynext
 
 # Set up extensions
 LOAD_EXT      = @load_ext@
@@ -173,14 +174,15 @@ test-installable: installable
 
 install: installable
 	$(MKPATH) $(INSTALL_DIR)
+	$(MKPATH) $(DESTDIR)$(BIN_DIR)
 	$(CP) $(BLIZKOST_GROUP) $(INSTALL_DIR)
-	$(CP) installable_blizkost@exe@ $(BIN_DIR)/parrot-blizkost@exe@
-	$(CHMOD) 0755 $(BIN_DIR)/parrot-blizkost@exe@
-	-$(MKPATH) $(LIB_DIR)/languages/perl5
-	$(CP) perl5.pbc $(LIB_DIR)/languages/perl5/perl5.pbc
-	-$(MKPATH) $(MAN_DIR)/man1
-	-$(MKPATH) $(DOC_DIR)/languages/perl5
-	$(CP) $(DOCS) $(DOC_DIR)/languages/perl5
+	$(CP) installable_blizkost@exe@ $(DESTDIR)$(BIN_DIR)/parrot-blizkost@exe@
+	$(CHMOD) 0755 $(DESTDIR)$(BIN_DIR)/parrot-blizkost@exe@
+	-$(MKPATH) $(DESTDIR)$(LIB_DIR)/languages/perl5
+	$(CP) perl5.pbc $(DESTDIR)$(LIB_DIR)/languages/perl5/perl5.pbc
+	-$(MKPATH) $(DESTDIR)$(MAN_DIR)/man1
+	-$(MKPATH) $(DESTDIR)$(DOC_DIR)/languages/perl5
+	$(CP) $(DOCS) $(DESTDIR)$(DOC_DIR)/languages/perl5
 
 uninstall:
 	$(RM_F) $(INSTALL_DIR)/$(PMC_BLIZKOST_GROUP)$(LOAD_EXT)
