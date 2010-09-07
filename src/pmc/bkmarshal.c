@@ -316,11 +316,11 @@ XS(blizkost_callable_trampoline)
     SP -= items;
     PUTBACK;
 
-    args = Parrot_pmc_new(nexus->parrot_interp, enum_class_ResizablePMCArray);
+    args = Parrot_pmc_new_init_int(nexus->parrot_interp, enum_class_ResizablePMCArray, items);
     for (i = 0; i < items; i++) {
         SV *svarg = ST(i);
         PMC *pmcarg = blizkost_wrap_sv(nexus, svarg);
-        VTABLE_unshift_pmc(nexus->parrot_interp, args, pmcarg);
+        VTABLE_set_pmc_keyed_int(nexus->parrot_interp, args, i, pmcarg);
     }
 
     Parrot_pcc_invoke_sub_from_c_args(nexus->parrot_interp, callable,
