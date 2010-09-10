@@ -67,7 +67,7 @@ blizkost_marshal_arg(BLIZKOST_NEXUS, PMC *arg) {
         c_str = Parrot_str_to_cstring(interp, pkg);
         result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
     }
-    else if (VTABLE_isa(interp, arg, CONST_STRING(interp, "String"))) {
+    else if (VTABLE_does(interp, arg, CONST_STRING(interp, "invokable"))) {
         char *c_str = Parrot_str_to_cstring(interp, VTABLE_get_string(interp, arg));
         result = sv_2mortal(newSVpv(c_str, strlen(c_str)));
     }
