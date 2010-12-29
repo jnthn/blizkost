@@ -98,7 +98,7 @@ Returns the string value of the SV.
         PMC             *elpmc;
         SV              *rsv, *element;
         svtype          type;
-        PMC             *nextkey = key_next(interp, key);
+        PMC             *nextkey = Parrot_key_next(interp, key);
 
         SvGETMAGIC(sv);
 
