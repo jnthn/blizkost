@@ -72,6 +72,7 @@ sub dubious {
 $config{p5_ldopts} = ldopts(1);
 $config{p5_ccopts} = ccopts(1);
 $config{p5_perl} = $^X;
+$config{cc_hasjit} //= '';
 
 #  Create the Makefile using the information we just got
 create_makefile('Makefile' => %config);
@@ -135,7 +136,7 @@ Chances of success are quite slim.  You should recompile Perl with the
 -Dusemultiplicity configuration option (-Dusethreads implies this).
 MULT
 
-dubious !$Perlconfig{useshrplib}, <<SHR;
+dubious $Perlconfig{useshrplib} eq 'false', <<SHR;
 Your Perl is not built as a dynamic library.  In the best case this will result
 in a bloated Blizkost library; other possible results include significantly
 slower startup, increased per-process memory usage, and in the worst case
