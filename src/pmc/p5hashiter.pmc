@@ -93,8 +93,8 @@ Mark GC-ables.
         GET_ATTR_backing_hash(INTERP, SELF, hash);
         GETATTR_P5SV_sv(INTERP, hash, hashsv);
 
-        retpmc = Parrot_pmc_new_noinit(interp, pmc_type(interp,
-                string_from_literal(interp, "P5HashIterResult")));
+        retpmc = Parrot_pmc_new_noinit(interp, Parrot_pmc_get_type_str(interp,
+                Parrot_str_new_constant(interp, "P5HashIterResult")));
         PObj_custom_mark_SET(retpmc);
 
         SETATTR_P5HashIterResult_hekey(INTERP, retpmc,

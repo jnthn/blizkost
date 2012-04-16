@@ -164,8 +164,8 @@ Acquire a namespace handle.
 
     METHOD PMC *get_namespace(STRING *name) {
         struct blizkost_nexus *nexus = PARROT_P5INTERPRETER(SELF)->nexus;
-        PMC *ns = Parrot_pmc_new_noinit(interp, pmc_type(interp,
-                    string_from_literal(interp, "P5Namespace")));
+        PMC *ns = Parrot_pmc_new_noinit(interp, Parrot_pmc_get_type_str(interp,
+                    Parrot_str_new_constant(interp, "P5Namespace")));
         /* Set up the underlying structure. */
         PObj_custom_mark_SET(ns);
         SETATTR_P5Namespace_nexus(interp, ns, nexus);

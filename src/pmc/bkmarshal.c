@@ -124,8 +124,8 @@ PARROT_CANNOT_RETURN_NULL
 PMC *
 blizkost_wrap_sv(BLIZKOST_NEXUS, SV *sv) {
     dBNPERL; dBNINTERP;
-    PMC *wrapper = Parrot_pmc_new_noinit(interp, pmc_type(interp,
-                string_from_literal(interp, "P5Scalar")));
+    PMC *wrapper = Parrot_pmc_new_noinit(interp, Parrot_pmc_get_type_str(interp,
+                Parrot_str_new_constant(interp, "P5Scalar")));
 
     PObj_custom_mark_SET(wrapper);
     PObj_custom_destroy_SET(wrapper);
@@ -158,7 +158,7 @@ blizkost_return_from_invoke(PARROT_INTERP, void *next) {
      * return continuation here, which gets rid of this frame
      * and returns the real return address
      */
-    if (cont && cont != NEED_CONTINUATION
+    if (!PMC_IS_NULL(cont)
             && (PObj_get_FLAGS(cont) & SUB_FLAG_TAILCALL)) {
         cont = Parrot_pcc_get_continuation(interp, CURRENT_CONTEXT(interp));
         next = VTABLE_invoke(interp, cont, next);
@@ -219,7 +219,7 @@ blizkost_call_in(BLIZKOST_NEXUS, SV *what, U32 mode, PMC *positp, PMC *namedp,
         SPAGAIN;
 
         /* Build the results PMC array. */
-        *retp = pmc_new(interp, enum_class_ResizablePMCArray);
+        *retp = Parrot_pmc_new(interp, enum_class_ResizablePMCArray);
         for (i = 0; i < num_returns; i++) {
             SV *result_sv = POPs;
             PMC *result_pmc = blizkost_wrap_sv(nexus, result_sv);
@@ -253,9 +253,7 @@ blizkost_delete_binding(PerlInterpreter *my_perl, SV *handle, MAGIC *mg)
     dBNINTERP;
     PMC *targ = (PMC *)(mg->mg_obj);
 
-    PARROT_CALLIN_START(interp);
     Parrot_pmc_gc_unregister(interp, targ);
-    PARROT_CALLIN_END(interp);
 
     return 0;
 }

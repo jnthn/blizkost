@@ -175,8 +175,8 @@ Returns the string value of the SV.
         type = SvTYPE(rsv);
 
         if (type == SVt_PVHV) {
-            PMC *iter = Parrot_pmc_new_noinit(interp, pmc_type(interp,
-                    string_from_literal(interp, "P5HashIter")));
+            PMC *iter = Parrot_pmc_new_noinit(interp, Parrot_pmc_get_type_str(interp,
+                    Parrot_str_new_constant(interp, "P5HashIter")));
 
             hv_iterinit((HV*) rsv);
 
@@ -215,7 +215,7 @@ the given name on the given Perl 5 Scalar invocant.
 
         PMC             *result;
 
-        result = pmc_new(interp, pmc_type(interp, string_from_literal(interp, "P5Invocation")));
+        result = Parrot_pmc_new(interp, Parrot_pmc_get_type_str(interp, Parrot_str_new_constant(interp, "P5Invocation")));
         SETATTR_P5Invocation_nexus(interp, result, nexus);
         SETATTR_P5Invocation_name(interp, result, name);
 
